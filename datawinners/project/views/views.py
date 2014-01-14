@@ -5,6 +5,7 @@ import logging
 from time import mktime
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -771,6 +772,23 @@ class SurveyWebQuestionnaireRequest():
 
         return render_to_response(self.template, _project_context,
                                   context_instance=RequestContext(self.request))
+#@login_required(login_url='/login')
+#@session_not_expired
+#@is_datasender_allowed
+#@project_has_web_device
+#@is_not_expired
+#@is_project_exist
+def xform_questionnaire(request, project_id=None):
+
+    manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+    project = Project.load(manager.database, project_id)
+    form_model = FormModel.get(manager, project.qid)
+    response = HttpResponse(content_type='application/xml')
+    response['Content-Disposition'] = 'attachment; filename=form.xml'
+    response.write(form_model.xform)
+    response['Content-Length'] = len(response.content)
+    assert len(form_model.xform) == len(response.content)
+    return response
 
 
 @login_required(login_url='/login')

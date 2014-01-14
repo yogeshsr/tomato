@@ -32,7 +32,8 @@ def make_project_links(project, questionnaire_code, reporter_id=None):
                      'questionnaire_preview_link': reverse("questionnaire_preview", args=[project_id]),
                      'sms_questionnaire_preview_link': reverse("sms_questionnaire_preview", args=[project_id]),
                      'my_datasenders_ajax_link': reverse("my_datasenders_ajax", args=[urlquote(project.name)]),
-                     'current_language': translation.get_language()
+                     'current_language': translation.get_language(),
+                     'enketo_link': 'http://localhost:8000/media/javascript/en.html?xform=http://localhost:8000/project/xformquestionnaire/'+project_id
     }
 
     if project.state == ProjectState.TEST or project.state == ProjectState.ACTIVE:

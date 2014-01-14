@@ -1,5 +1,6 @@
 import logging
 import xml
+from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django_digest.decorators import httpdigest
@@ -22,27 +23,32 @@ sp_submission_logger = logging.getLogger("sp-submission")
 
 def restrict_request_country(f):
     def wrapper(*args, **kw):
-        request = args[0]
-        user = request.user
-        org = Organization.objects.get(org_id=user.get_profile().org_id)
-        try:
-            country_code = GeoIP().country_code(request.META.get('REMOTE_ADDR'))
-        except Exception as e:
-            logger.exception("Error resolving country from IP : \n%s" % e)
-            raise
-        log_message = 'User: %s, IP: %s resolved in %s, for Oragnization id: %s located in country: %s ' %\
-                      (user, request.META.get('REMOTE_ADDR'), country_code, org.org_id, org.country)
-        logger.info(log_message)
         return f(*args, **kw)
+        # request = args[0]
+        # user = request.user
+        # org = Organization.objects.get(org_id=user.get_profile().org_id)
+        # try:
+        #     country_code = GeoIP().country_code(request.META.get('REMOTE_ADDR'))
+        # except Exception as e:
+        #     logger.exception("Error resolving country from IP : \n%s" % e)
+        #     raise
+        # log_message = 'User: %s, IP: %s resolved in %s, for Oragnization id: %s located in country: %s ' %\
+        #               (user, request.META.get('REMOTE_ADDR'), country_code, org.org_id, org.country)
+        # logger.info(log_message)
+        # return f(*args, **kw)
 
     return wrapper
 
 
-@csrf_exempt
-@httpdigest
-@restrict_request_country
+# @csrf_exempt
+# @httpdigest
+# @restrict_request_country
 def formList(request):
-    rows = get_all_project_for_user(request.user)
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    rows = get_all_project_for_user(request_user)
+    # todo implement some sorting; Return all projects
+    # rows = sorted(rows, key=lambda x:x['value']['created'], reverse=False)
+    rows = rows[-5:]
     form_tuples = [(row['value']['name'], row['value']['qid']) for row in rows]
     xform_base_url = request.build_absolute_uri('/xforms')
     response = HttpResponse(content=list_all_forms(form_tuples, xform_base_url), mimetype="text/xml")
@@ -56,28 +62,35 @@ def get_errors(errors):
 
 def __authorized_to_make_submission_on_requested_form(request_user, submission_file):
     rows = get_all_project_for_user(request_user)
-    questionnaire_ids = [(row['value']['qid']) for row in rows]
+    #todo fix this
+    #questionnaire_ids = [(row['value']['qid']) for row in rows]
     dom = xml.dom.minidom.parseString(submission_file)
-    requested_qid = dom.getElementsByTagName('data')[0].getAttribute('id')
-    return requested_qid in questionnaire_ids
-
+    requested_qid = dom.documentElement.getAttribute('id')
+    return True #todo requested_qid in questionnaire_ids
 
 @csrf_exempt
-@httpdigest
-@restrict_request_country
+# @restrict_request_country
+# @httpdigest
 def submission(request):
     if request.method != 'POST':
         response = HttpResponse(status=204)
         response['Location'] = request.build_absolute_uri()
         return response
 
-    request_user = request.user
-    submission_file = request.FILES.get("xml_submission_file").read()
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    if request.FILES.get("xml_submission_file"):
+        submission_file = request.FILES.get("xml_submission_file").read()
+    else:
+        submission_file = request.POST['a']
+    # for debugging
+    # f = open('sample.xml','w')
+    # f.write(submission_file)
+    # f.close()
 
-    if not __authorized_to_make_submission_on_requested_form(request_user, submission_file) \
-        or is_quota_reached(request):
-        response = HttpResponse(status=403)
-        return response
+    # if not __authorized_to_make_submission_on_requested_form(request_user, submission_file) \
+    #     or is_quota_reached(request):
+    #     response = HttpResponse(status=403)
+    #     return response
 
     manager = get_database_manager(request_user)
     player = XFormPlayerV2(manager, get_feeds_database(request_user))
@@ -89,8 +102,12 @@ def submission(request):
                 source=request_user.email,
                 destination=''
             ))
-
-        response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
+        survey_response_id = request.GET.get('survey_response_id', '')
+        if survey_response_id:
+            response = player.update_survey_response(mangrove_request, user_profile.reporter_id, logger=sp_submission_logger, survey_response_id=survey_response_id)
+        else:
+            response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
+        submission_id = response.submission_id
         mail_feed_errors(response, manager.database_name)
         if response.errors:
             logger.error("Error in submission : \n%s" % get_errors(response.errors))
@@ -106,12 +123,13 @@ def submission(request):
     check_quotas_and_update_users(organization)
     response = HttpResponse(status=201)
     response['Location'] = request.build_absolute_uri(request.path)
+    response['submission_id'] = submission_id
     return response
 
-
-@csrf_exempt
-@httpdigest
+# @httpdigest
+# @csrf_exempt
 def xform(request, questionnaire_code=None):
-    request_user = request.user
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    # request_user = request.user
     form = xform_for(get_database_manager(request_user), questionnaire_code, request_user.get_profile().reporter_id)
     return HttpResponse(content=form, mimetype="text/xml")

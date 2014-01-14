@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext
 from mangrove.errors.MangroveException import DataObjectNotFound
-from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField
+from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, FieldSet
 from mangrove.form_model.form_model import LOCATION_TYPE_FIELD_NAME
 from mangrove.form_model.validation import NumericRangeConstraint, TextLengthConstraint, RegexConstraint, ShortCodeRegexConstraint
 from mangrove.utils.helpers import slugify
@@ -61,6 +61,16 @@ class QuestionBuilder( object ):
             return self._create_telephone_number_question( post_dict, code )
         if post_dict["type"] == "list":
             return self._create_location_question( post_dict, code )
+        if post_dict["type"] == "field_set":
+                    return self._create_field_set_question( post_dict, code )
+
+    def _create_field_set_question(self, post_dict, code):
+
+        fields = post_dict.get( "fields" )
+        sub_form_fields = [self.create_question(f, f['code']) for i,f in enumerate(fields)]
+        return FieldSet( name=self._get_name( post_dict ), code=code, label=post_dict["title"],
+                          entity_question_flag=post_dict.get( "is_entity_question" ), constraints=[],
+                          instruction=post_dict.get( "instruction" ), required=post_dict.get( "required" ), field_set=sub_form_fields)
 
     def create_entity_id_question_for_activity_report(self):
         entity_id_code = "eid"
