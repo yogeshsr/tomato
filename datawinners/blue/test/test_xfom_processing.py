@@ -1,41 +1,30 @@
 import unittest
-from pyxform import create_survey_from_path
-from pyxform.xform2json import XFormToDict
-from datawinners.blue.xfom_bridge import XfromToJson, MangroveService
+from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson
 
 
 class TestXFormProcessing(unittest.TestCase):
 
-    def setUp(self):
-        self.always_increment_before_each_test_run = 21
+    def test_should_create_project_using_xlsform_file_path(self):
 
-    def test_some(self):
-        xform_dict = XFormToDict(open('repeat.xml', 'r').read()).get_dict()
-        print xform_dict
-
-    def test_should_create_project_using_xlsform(self):
-        xls_form_name = 'text_and_integer.xls'
-        survey = create_survey_from_path(xls_form_name)
-        xform_as_string = survey.to_xml()
-
-        json_xform_data = XfromToJson(xform_as_string).parse()
+        xform_as_string, json_xform_data = XlsFormToJson('text_and_integer.xls', is_path_to_file=True).parse()
 
         # mangrove code
-        mangroveService = MangroveService(xform_as_string, self.always_increment_before_each_test_run)
-        questionnaire_id = mangroveService.create_questionnaire(json_xform_data)
-        p = mangroveService.create_project(questionnaire_id)
+        mangroveService = MangroveService(xform_as_string, json_xform_data)
+        id, name = mangroveService.create_project()
+        self.assertIsNotNone(id)
+        self.assertIsNotNone(name)
 
-        self.assertIsNotNone(p)
 
-    def test_project_created_using_xform(self):
+    def test_project_created_using_xform_string(self):
 
-        xform_as_string = open('xpath-sample.xml', 'r').read()
+        xform_test_string = open('xpath-sample.xml', 'r').read()
 
-        json_xform_data = XfromToJson(xform_as_string).parse()
+        json_xform_data = XfromToJson(xform_test_string).parse()
 
         # mangrove code
-        mangroveService = MangroveService(xform_as_string, self.always_increment_before_each_test_run)
-        questionnaire_id = mangroveService.create_questionnaire(json_xform_data)
-        p = mangroveService.create_project(questionnaire_id)
+        id, name = MangroveService(xform_test_string, json_xform_data).create_project()
+        self.assertIsNotNone(id)
+        self.assertIsNotNone(name)
 
-        self.assertIsNotNone(p)
+    # def test_should_create_project_when_xlsform_is_uploaded(self):
+    #     pass

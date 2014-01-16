@@ -37,6 +37,10 @@
     <script type="text/javascript" src="/media/javascript/entity/create_type.js"></script>
     <script type="text/javascript" src="/media/javascript/project/questionnaire_instruction_and_preview.js"></script>
     <script type="text/javascript" src="/media/javascript/project/questionnaire_instruction_and_preview_wizard.js"></script>
+
+    <script type="text/javascript" src="/media/javascript/file_uploader/fileuploader.js"></script>
+    <script type="text/javascript" src="/media/javascript/project/import_project.js"></script>
+
     <script type="text/javascript">
         var is_edit = {{ is_edit }};
     </script>
@@ -83,6 +87,16 @@
         </div>
     </script>
 
+    <div>
+        Upload xlsForm to create project
+        <div class="file-uploader" class="grid">
+            <noscript>
+                <p>{% trans "Please enable JavaScript to use file uploader." %}</p>
+            </noscript>
+            <div id="file_uploader" class="float_left grid_5"></div>
+        </div>
+
+    </div>
     <div id="project-message-label" class="message-box none">
     </div>
     <input id='post_url' value="{{ post_url }}" type='hidden'/>

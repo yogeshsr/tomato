@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns, url
-from datawinners.blue.views.xfom_handlers import xfom_handle_upload
+from datawinners.blue.view import ProjectUpload
 
 urlpatterns = patterns('',
-                       url(r'^upload/$', xfom_handle_upload),
+                       url(r'^xlsform/upload/$', ProjectUpload.as_view(), name="import_project"),
 )

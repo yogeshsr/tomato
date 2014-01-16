@@ -1,13 +1,40 @@
-from django.contrib.auth.models import User
+from tempfile import NamedTemporaryFile
 from xml.etree import ElementTree as ET
+
+from django.contrib.auth.models import User
+from pyxform import create_survey_from_path, create_survey_element_from_dict
 from pyxform.xform2json import XFormToDict
+from pyxform.xls2json import workbook_to_json
+from pyxform.xls2json_backends import xls_to_dict
+
 from datawinners.accountmanagement.models import NGOUserProfile
 from datawinners.main.database import get_database_manager
+from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from mangrove.form_model.form_model import FormModel
+
 # noinspection PyUnresolvedReferences
 from datawinners.search import *
+
+class XlsFormToJson():
+
+    def __init__(self, file_content_or_path, is_path_to_file=False):
+        if is_path_to_file:
+            survey = create_survey_from_path(file_content_or_path)
+            self.xform_as_string = survey.to_xml()
+        else:
+            f = NamedTemporaryFile(delete=True)
+            f.write(file_content_or_path)
+            f.seek(0)
+            workbook_dict = xls_to_dict(f)
+            json_dict = workbook_to_json(workbook_dict, form_name='some_name')
+            survey = create_survey_element_from_dict(json_dict)
+            self.xform_as_string = survey.to_xml()
+
+    def parse(self):
+        return self.xform_as_string, XfromToJson(self.xform_as_string).parse()
+
 
 class XfromToJson():
 
@@ -56,27 +83,29 @@ class XfromToJson():
 
 class MangroveService():
 
-    def __init__(self, xform_as_string, incremented_number):
-        i = incremented_number
+    def __init__(self, xform_as_string, json_xform_data):
         self.user = User.objects.get(username="tester150411@gmail.com")
         self.manager = get_database_manager(self.user)
         self.entity_type = ['reporter']
-        self.name = 'xform-project-' + str(i)
-        self.questionnaire_code = str(47 + i)
+        self.questionnaire_code =  generate_questionnaire_code(self.manager)
+        self.name = 'Xlsform Project-' + self.questionnaire_code
         self.project_state = 'Test'
         self.language = 'en'
         self.xform = xform_as_string
+        self.json_xform_data = json_xform_data
 
-    def create_questionnaire(self, json_xform_data):
+    def _create_questionnaire(self):
 
         form_model = FormModel(self.manager, entity_type=self.entity_type, name=self.name, type='survey',
                                state=self.project_state, fields=[], form_code=self.questionnaire_code, language=self.language)
-        QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(json_xform_data)
+        QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(self.json_xform_data)
         form_model.xform = self.xform
         questionnaire_id = form_model.save()
         return questionnaire_id
 
-    def create_project(self, questionnaire_id):
+    def create_project(self):
+
+        questionnaire_id = self._create_questionnaire()
 
         project = Project(name=self.name, goals='project created using xform',
                   project_type='survey', entity_type=self.entity_type[0],
@@ -90,4 +119,4 @@ class MangroveService():
 
         p = project.save(self.manager)
 
-        return p
+        return p, self.name
