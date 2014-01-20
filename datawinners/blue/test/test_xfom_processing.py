@@ -1,4 +1,5 @@
 import unittest
+from django.test import Client
 from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson
 
 
@@ -26,5 +27,11 @@ class TestXFormProcessing(unittest.TestCase):
         self.assertIsNotNone(id)
         self.assertIsNotNone(name)
 
-    # def test_should_create_project_when_xlsform_is_uploaded(self):
-    #     pass
+    def test_should_create_project_when_xlsform_is_uploaded(self):
+        client = Client()
+        client.login(username='tester150411@gmail.com', password='tester150411')
+
+        r = client.post(path='/xlsform/upload/?qqfile=text_and_integer.xls', data=open('text_and_integer.xls', 'r').read(), content_type='application/octet-stream')
+
+        self.assertEquals(r.status_code, 200)
+        self.assertNotEqual(r._container[0].find('project_name'), -1)

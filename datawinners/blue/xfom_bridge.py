@@ -70,15 +70,15 @@ class XfromToJson():
         help_dict = {'string': 'word', 'int': 'number', 'date': 'date'}
         json_xform_data = []
         for k, v in name_label_type_dict.items():
-            d = {'title': v['label'], 'type': xform_dw_type_dict[v['type']], "is_entity_question": False,
+            question = {'title': v['label'], 'type': xform_dw_type_dict[v['type']], "is_entity_question": False,
                  "code": k.rsplit('/', 1)[-1], "name": k, 'required': True,
                  "instruction": "Answer must be a %s" % help_dict[v['type']]} # todo help text need improvement
 
             if v['type'] == 'date':
-                d.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
+                question.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
                           "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
 
-            json_xform_data.append(d)
+            json_xform_data.append(question)
         return json_xform_data
 
 class MangroveService():
@@ -96,10 +96,21 @@ class MangroveService():
 
     def _create_questionnaire(self):
 
+        #todo make sure that xform field is added to FormModel
+        '''
+        @property
+        def xform(self):
+            return self._doc.xform
+
+        @xform.setter
+        def xform(self, value):
+            self._doc.xform = value
+        '''
+
         form_model = FormModel(self.manager, entity_type=self.entity_type, name=self.name, type='survey',
                                state=self.project_state, fields=[], form_code=self.questionnaire_code, language=self.language)
         QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(self.json_xform_data)
-        form_model.xform = self.xform
+        form_model.xform=self.xform
         questionnaire_id = form_model.save()
         return questionnaire_id
 
