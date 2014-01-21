@@ -2,6 +2,7 @@ from tempfile import NamedTemporaryFile
 from xml.etree import ElementTree as ET
 
 from django.contrib.auth.models import User
+from mangrove.errors.MangroveException import QuestionAlreadyExistsException
 from pyxform import create_survey_from_path, create_survey_element_from_dict
 from pyxform.xform2json import XFormToDict
 from pyxform.xls2json import workbook_to_json
@@ -46,7 +47,7 @@ class XfromToJson():
 
     def _transform(self):
         xform_dict = XFormToDict(self.xform).get_dict()
-        self.name_attrib_dict = {bind['nodeset']: bind for bind in xform_dict['html']['head']['model']['bind']}
+        self.name_attrib_dict = {self.last_value(bind['nodeset']): bind for bind in xform_dict['html']['head']['model']['bind']}
         questions = []
         groups = xform_dict['html']['body'].get('group')
         if groups:
@@ -62,17 +63,23 @@ class XfromToJson():
         else:
             return [call_fun(param)] if return_list else call_fun(param)
 
+    def last_value(self, input):
+        return input
+        #return input.rsplit('/', 1)[-1]
+
     def convert_group(self, group):
         group_label = group['label']
-        group_name = group['ref']
+        if not group_label: #todo create appropriate error class
+            raise QuestionAlreadyExistsException('Unique group label is required')
+        group_name = self.last_value(group['ref'])
         repeats = group['repeat']
         questions = []
         questions.extend(self.call_appropriate(repeats, self.convert_repeat, False))
-        #todo remove this duplication
+        #todo remove this duplication; note: required is Flase
         q = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
-                 "code": group_name.rsplit('/', 1)[-1], "name": group_name, 'required': True,
+                 "code": group_name, "name": group_label, 'required': False,
                  "instruction": "No answer required",
-                 'field_set':questions}
+                 'fields':questions}
         return q
 
     def _parse_field_set(self):
@@ -86,13 +93,13 @@ class XfromToJson():
     def create_question(self, input):
         xform_dw_type_dict = {'string': 'text', 'int': 'integer', 'date': 'date'}
         help_dict = {'string': 'word', 'int': 'number', 'date': 'date'}
-        label = input['label']
-        name = input['ref']
-        type = self.name_attrib_dict[name]['type']
+        name = input['label']
+        code = self.last_value(input['ref'])
+        type = self.name_attrib_dict[code]['type']
         # todo entityquestion
         # todo maintain the sequence of fields
-        q = {'title': label, 'type': xform_dw_type_dict[type], "is_entity_question": False,
-                 "code": name.rsplit('/', 1)[-1], "name": name, 'required': True,
+        q = {'title': name, 'type': xform_dw_type_dict[type], "is_entity_question": False,
+                 "code": code, "name": name, 'required': True,
                  "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
         if type == 'date':
                 q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,

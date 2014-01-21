@@ -64,13 +64,13 @@ class QuestionBuilder( object ):
             return self._create_telephone_number_question( post_dict, ddtype, code )
         if post_dict["type"] == "list":
             return self._create_location_question( post_dict, ddtype, code )
-        if post_dict["type"] == "field_list":
-                    return self._create_field_list_question( post_dict, ddtype, code )
+        if post_dict["type"] == "field_set":
+                    return self._create_field_set_question( post_dict, ddtype, code )
 
-    def _create_field_list_question(self, post_dict, ddtype, code):
+    def _create_field_set_question(self, post_dict, ddtype, code):
 
         fields = post_dict.get( "fields" )
-        sub_form_fields = [self.create_question(f, code + str(i+1)) for i,f in enumerate(fields)]
+        sub_form_fields = [self.create_question(f, f['code']) for i,f in enumerate(fields)]
         return FieldSet( name=self._get_name( post_dict ), code=code, label=post_dict["title"],
                           entity_question_flag=post_dict.get( "is_entity_question" ), constraints=[],
                           ddtype=ddtype,
