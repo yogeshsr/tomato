@@ -42,44 +42,63 @@ class XfromToJson():
         self.xform = xform_as_string
 
     def parse(self):
-        name_label_type_dict = self._parse_xform()
-        return self._transform_xform_to_json_post(name_label_type_dict)
+        return self._transform()
 
-    # intial implementation; can be removed
-    def _parse_xform_custom(self):
-        root = ET.fromstring(self.xform)
-        name_label_dict = {r.attrib['ref']: r._children[0].text for r in root.iter('{http://www.w3.org/2002/xforms}input')}
-        name_attrib_dict = {r.attrib['nodeset']: r.attrib for r in root.iter('{http://www.w3.org/2002/xforms}bind')}
-
-        name_label_type_dict = {n: {'label':name_label_dict[n], 'type':name_attrib_dict[n]['type']} for n,l in name_label_dict.items()}
-
-        return name_label_type_dict
-
-    def _parse_xform(self):
-        # using pyxform
+    def _transform(self):
         xform_dict = XFormToDict(self.xform).get_dict()
-        name_label_dict = {input['ref']: input['label'] for input in xform_dict['html']['body']['input']}
-        name_attrib_dict = {bind['nodeset']: bind for bind in xform_dict['html']['head']['model']['bind']}
+        self.name_attrib_dict = {bind['nodeset']: bind for bind in xform_dict['html']['head']['model']['bind']}
+        questions = []
+        groups = xform_dict['html']['body'].get('group')
+        if groups:
+            questions.extend(self.call_appropriate(groups,self.convert_group))
+        inputs = xform_dict['html']['body']['input']
+        questions.extend(self.call_appropriate(inputs, self.create_question))
+        return questions
 
-        name_label_type_dict = {n: {'label':name_label_dict[n], 'type':name_attrib_dict[n]['type']} for n,l in name_label_dict.items()}
 
-        return name_label_type_dict
+    def call_appropriate(self, param, call_fun, return_list = True):
+        if (type(param) is list):
+            return [call_fun(o) for o in param]
+        else:
+            return [call_fun(param)] if return_list else call_fun(param)
 
-    def _transform_xform_to_json_post(self, name_label_type_dict):
+    def convert_group(self, group):
+        group_label = group['label']
+        group_name = group['ref']
+        repeats = group['repeat']
+        questions = []
+        questions.extend(self.call_appropriate(repeats, self.convert_repeat, False))
+        #todo remove this duplication
+        q = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
+                 "code": group_name.rsplit('/', 1)[-1], "name": group_name, 'required': True,
+                 "instruction": "No answer required",
+                 'field_set':questions}
+        return q
+
+    def _parse_field_set(self):
+        pass
+
+    def convert_repeat(self, repeat):
+        nodeset = repeat['nodeset']
+        inputs = repeat['input']
+        return self.call_appropriate(inputs, self.create_question)
+
+    def create_question(self, input):
         xform_dw_type_dict = {'string': 'text', 'int': 'integer', 'date': 'date'}
         help_dict = {'string': 'word', 'int': 'number', 'date': 'date'}
-        json_xform_data = []
-        for k, v in name_label_type_dict.items():
-            question = {'title': v['label'], 'type': xform_dw_type_dict[v['type']], "is_entity_question": False,
-                 "code": k.rsplit('/', 1)[-1], "name": k, 'required': True,
-                 "instruction": "Answer must be a %s" % help_dict[v['type']]} # todo help text need improvement
-
-            if v['type'] == 'date':
-                question.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
+        label = input['label']
+        name = input['ref']
+        type = self.name_attrib_dict[name]['type']
+        # todo entityquestion
+        # todo maintain the sequence of fields
+        q = {'title': label, 'type': xform_dw_type_dict[type], "is_entity_question": False,
+                 "code": name.rsplit('/', 1)[-1], "name": name, 'required': True,
+                 "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
+        if type == 'date':
+                q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
                           "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
 
-            json_xform_data.append(question)
-        return json_xform_data
+        return q
 
 class MangroveService():
 
@@ -115,7 +134,6 @@ class MangroveService():
         return questionnaire_id
 
     def create_project(self):
-
         questionnaire_id = self._create_questionnaire()
 
         project = Project(name=self.name, goals='project created using xform',

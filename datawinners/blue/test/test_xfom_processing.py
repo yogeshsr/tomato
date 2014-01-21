@@ -35,3 +35,24 @@ class TestXFormProcessing(unittest.TestCase):
 
         self.assertEquals(r.status_code, 200)
         self.assertNotEqual(r._container[0].find('project_name'), -1)
+
+    def test_should_verify_xform_is_stored_when_project_created(self):
+        pass
+
+    def test_should_verify_repeat_field_added_to_questionnaire(self):
+        xform_as_string, json_xform_data = XlsFormToJson('repeat.xls', is_path_to_file=True).parse()
+        # json_xform_data
+
+    def test_should_convert_simple_single_question(self):
+        pass
+
+    def test_should_convert_multiple_simple_questions(self):
+        pass
+
+    def test_should_convert_single_simple_and_single_repeat_question(self):
+        pass
+
+    def test_should_convert_multiple_simple_and_multiple_repeat_question(self):
+        pass
+
+

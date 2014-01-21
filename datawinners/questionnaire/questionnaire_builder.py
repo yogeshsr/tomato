@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext
 from mangrove.datastore.datadict import create_datadict_type, get_datadict_type_by_slug
 from mangrove.errors.MangroveException import DataObjectNotFound
-from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField
+from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, FieldSet
 from mangrove.form_model.form_model import LOCATION_TYPE_FIELD_NAME
 from mangrove.form_model.validation import NumericRangeConstraint, TextLengthConstraint, RegexConstraint, ShortCodeRegexConstraint
 from mangrove.utils.helpers import slugify
@@ -64,6 +64,17 @@ class QuestionBuilder( object ):
             return self._create_telephone_number_question( post_dict, ddtype, code )
         if post_dict["type"] == "list":
             return self._create_location_question( post_dict, ddtype, code )
+        if post_dict["type"] == "field_list":
+                    return self._create_field_list_question( post_dict, ddtype, code )
+
+    def _create_field_list_question(self, post_dict, ddtype, code):
+
+        fields = post_dict.get( "fields" )
+        sub_form_fields = [self.create_question(f, code + str(i+1)) for i,f in enumerate(fields)]
+        return FieldSet( name=self._get_name( post_dict ), code=code, label=post_dict["title"],
+                          entity_question_flag=post_dict.get( "is_entity_question" ), constraints=[],
+                          ddtype=ddtype,
+                          instruction=post_dict.get( "instruction" ), required=post_dict.get( "required" ), field_set=sub_form_fields)
 
     def _get_or_create_data_dict(self, name, slug, primitive_type, description=None):
         try:

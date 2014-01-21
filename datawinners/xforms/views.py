@@ -22,18 +22,19 @@ sp_submission_logger = logging.getLogger("sp-submission")
 
 def restrict_request_country(f):
     def wrapper(*args, **kw):
-        request = args[0]
-        user = request.user
-        org = Organization.objects.get(org_id=user.get_profile().org_id)
-        try:
-            country_code = GeoIP().country_code(request.META.get('REMOTE_ADDR'))
-        except Exception as e:
-            logger.exception("Error resolving country from IP : \n%s" % e)
-            raise
-        log_message = 'User: %s, IP: %s resolved in %s, for Oragnization id: %s located in country: %s ' %\
-                      (user, request.META.get('REMOTE_ADDR'), country_code, org.org_id, org.country)
-        logger.info(log_message)
         return f(*args, **kw)
+        # request = args[0]
+        # user = request.user
+        # org = Organization.objects.get(org_id=user.get_profile().org_id)
+        # try:
+        #     country_code = GeoIP().country_code(request.META.get('REMOTE_ADDR'))
+        # except Exception as e:
+        #     logger.exception("Error resolving country from IP : \n%s" % e)
+        #     raise
+        # log_message = 'User: %s, IP: %s resolved in %s, for Oragnization id: %s located in country: %s ' %\
+        #               (user, request.META.get('REMOTE_ADDR'), country_code, org.org_id, org.country)
+        # logger.info(log_message)
+        # return f(*args, **kw)
 
     return wrapper
 
@@ -73,6 +74,9 @@ def submission(request):
 
     request_user = request.user
     submission_file = request.FILES.get("xml_submission_file").read()
+    f = open('sample.xml','w')
+    f.write(submission_file)
+    f.close()
 
     if not __authorized_to_make_submission_on_requested_form(request_user, submission_file) \
         or is_quota_reached(request):
