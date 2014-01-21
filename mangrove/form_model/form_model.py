@@ -166,6 +166,14 @@ class FormModel(DataObject):
         self._doc.name = value
 
     @property
+    def xform(self):
+        return self._doc.xform
+
+    @xform.setter
+    def xform(self, value):
+        self._doc.xform = value
+
+    @property
     def entity_question(self):
         eq = None
         for f in self._form_fields:
