@@ -141,7 +141,7 @@ class field_attributes(object):
     ENTITY_QUESTION_FLAG = 'entity_question_flag'
     NAME = "name"
     LIST_FIELD = "list"
-
+    FIELD_SET = "field_set"
 
 class Field(object):
     def __init__(self, type="", name="", code="", label='', instruction='',
@@ -447,7 +447,32 @@ class ShortCodeField(TextField):
         value = self._clean(value)
         return super(ShortCodeField, self).validate(value)
 
+class FieldSet(Field):
+    def __init__(self, name, code, label, ddtype, constraints=None, defaultValue="", instruction=None,
+                 entity_question_flag=False, required=True, field_set=[]):
+        Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
+                       label=label, ddtype=ddtype, instruction=instruction, required=required)
+        self.fields = self._dict['fields'] = field_set
 
+    def validate(self, value):
+        # todo find how call all validators of the child fields
+        Field.validate(self, value)
+        if is_sequence(value) or value is None:
+            return value
+        return [value]
+
+    #todo find the application of this
+    def convert_to_unicode(self):
+        if self.value is None:
+            return unicode("")
+        return sequence_to_str(self.value) if isinstance(self.value, list) else unicode(self.value)
+
+    def _to_json(self):
+        dict = self._dict.copy()
+        dict['instruction'] = self._dict['instruction']
+        dict['ddtype'] = dict['ddtype'].to_json()
+        dict['fields'] = [f._to_json() for f in self.fields]
+        return dict
 
 class HierarchyField(Field):
     def __init__(self, name, code, label, instruction=None,
