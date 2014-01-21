@@ -7,7 +7,7 @@ from mangrove.datastore.database import DatabaseManager, DataObject
 from mangrove.datastore.documents import FormModelDocument, attributes
 from mangrove.errors.MangroveException import FormModelDoesNotExistsException, QuestionCodeAlreadyExistsException, \
     EntityQuestionAlreadyExistsException, DataObjectAlreadyExists, QuestionAlreadyExistsException
-from mangrove.form_model.field import TextField
+from mangrove.form_model.field import TextField, FieldSet
 from mangrove.form_model.validators import MandatoryValidator
 from mangrove.utils.types import is_sequence, is_string, is_empty, is_not_empty
 from mangrove.form_model import field
@@ -379,8 +379,13 @@ class FormModel(DataObject):
     def bind(self, submission):
         self.submission = submission
         for field in self.fields:
-            answer = self._case_insensitive_lookup(self.submission, field.code)
-            field.set_value(answer)
+            #todo add fieldSet processing
+            if type(field) is FieldSet:
+                for f in field.fields:
+                    #todo field is one; how to store multiple
+            else:
+                answer = self._case_insensitive_lookup(self.submission, field.code)
+                field.set_value(answer)
 
     def _validate_fields(self, fields):
         self._validate_existence_of_only_one_entity_field(fields)

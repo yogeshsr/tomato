@@ -31,6 +31,10 @@ def list_all_forms(form_tuples, xform_base_url):
 
 def xform_for(dbm, form_id, reporter_id):
     questionnaire = FormModel.get(dbm, form_id)
+    xform = questionnaire.xform
+    if xform:
+        return xform
+
     _escape_special_characters(questionnaire)
     if questionnaire.is_entity_type_reporter():
         template = env.get_template('reporter_entity_form.xml')

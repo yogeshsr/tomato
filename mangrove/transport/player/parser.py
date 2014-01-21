@@ -10,7 +10,7 @@ import xmldict
 
 from mangrove.errors.MangroveException import MultipleSubmissionsForSameCodeException, SMSParserInvalidFormatException, \
     CSVParserInvalidHeaderFormatException, XlsParserInvalidHeaderFormatException
-from mangrove.form_model.field import SelectField, GeoCodeField, DateField, IntegerField
+from mangrove.form_model.field import SelectField, GeoCodeField, DateField, IntegerField, FieldSet
 from mangrove.form_model.form_model import get_form_model_by_code
 from mangrove.utils.types import is_empty, is_string
 from mangrove.contrib.registration import REGISTRATION_FORM_CODE
@@ -317,10 +317,10 @@ class XFormParser(object):
         self.dbm = dbm
 
     def _fetch_string_value(self, message):
-        return {code: self._to_str(value) for code, value in message.iteritems()}
+        return {code: self._to_str(value) if type(value) is not list else value for code, value in message.iteritems()}
 
     def parse(self, message):
-        submission_dict = xmldict.xml_to_dict(message).get('data')
+        submission_dict = xmldict.xml_to_dict(message).values()[0]
         form_code = submission_dict.pop('form_code')
         form_model = get_form_model_by_code(self.dbm, form_code)
         self.__format_response_fields(form_model, submission_dict)
@@ -331,18 +331,32 @@ class XFormParser(object):
             return str(value)
         return "".join(value) if value is not None else None
 
+    def last_value(self, input_str):
+        return input_str.rsplit('/', 1)[-1]
+
+    def _format_field(self, field, values):
+        code = self.last_value(field.code)
+        if type(field) == SelectField and field.single_select_flag == False:
+            values[code] = values[code].replace(' ', '')
+        if type(field) == GeoCodeField:
+            geo_code_list = values[code].split(' ')
+            values[code] = '{0},{1}'.format(geo_code_list[0], geo_code_list[1])
+        if type(field) == DateField:
+            date = datetime.strptime(values[code], "%Y-%m-%d")
+            values[code] = self.__get_formatted_date(field.date_format, date)
+        if type(field) == IntegerField:
+            values[code] = "%g" % float(values[code])
+        if type(field) == FieldSet:
+            vs = values[code]
+
+            for f in field.fields:
+                for vals in vs:
+                    self._format_field(f, vals)
+            values[code] = [self._fetch_string_value(r) for r in vs]
+
     def __format_response_fields(self, form_model, values):
         for field in form_model.fields:
-            if type(field) == SelectField and field.single_select_flag == False:
-                values[field.code] = values[field.code].replace(' ', '')
-            if type(field) == GeoCodeField:
-                geo_code_list = values[field.code].split(' ')
-                values[field.code] = '{0},{1}'.format(geo_code_list[0], geo_code_list[1])
-            if type(field) == DateField:
-                date = datetime.strptime(values[field.code], "%Y-%m-%d")
-                values[field.code] = self.__get_formatted_date(field.date_format, date)
-            if type(field) == IntegerField:
-                values[field.code] = "%g" % float(values[field.code])
+            self._format_field(field, values)
         return values
 
     def __get_formatted_date(self, date_format, date):

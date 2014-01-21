@@ -43,8 +43,22 @@ def create_question_from(dictionary, dbm):
         return _get_telephone_number_field(code, ddtype, dictionary, label, name, instruction, required)
     elif type == field_attributes.SHORT_CODE_FIELD:
         return _get_short_code_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required)
+    elif type == field_attributes.FIELD_SET:
+        return _get_field_set_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required,
+                                    dbm)
     return None
 
+def _get_field_set_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required, dbm):
+    constraints, constraints_json = [], dictionary.get("constraints")
+    if constraints_json is not None:
+        constraints = constraints_factory(constraints_json)
+
+    sub_fields = dictionary.get("fields")
+    repeat_question_fields = [create_question_from(f, dbm) for f in sub_fields]
+    field = FieldSet(name=name, code=code, label=label, entity_question_flag=is_entity_question,
+                      constraints=constraints, ddtype=ddtype, instruction=instruction, required=required,
+                      field_set=repeat_question_fields)
+    return field
 
 def _get_text_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required):
     constraints, constraints_json = [], dictionary.get("constraints")
@@ -195,6 +209,10 @@ class Field(object):
 
     @property
     def is_entity_field(self):
+        return False
+
+    @property
+    def is_field_set(self):
         return False
 
     @property
@@ -462,6 +480,9 @@ class FieldSet(Field):
         Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
                        label=label, ddtype=ddtype, instruction=instruction, required=required)
         self.fields = self._dict['fields'] = field_set
+
+    def is_field_set(self):
+        return True
 
     def validate(self, value):
         # todo find how call all validators of the child fields
