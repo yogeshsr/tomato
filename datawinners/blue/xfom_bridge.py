@@ -57,15 +57,14 @@ class XfromToJson():
         return questions
 
 
-    def call_appropriate(self, param, call_fun, return_list = True):
-        if (type(param) is list):
+    def call_appropriate(self, param, call_fun, return_list=True):
+        if type(param) is list:
             return [call_fun(o) for o in param]
         else:
             return [call_fun(param)] if return_list else call_fun(param)
 
     def last_value(self, input):
-        return input
-        #return input.rsplit('/', 1)[-1]
+        return input.rsplit('/', 1)[-1]
 
     def convert_group(self, group):
         group_label = group['label']
@@ -86,7 +85,6 @@ class XfromToJson():
         pass
 
     def convert_repeat(self, repeat):
-        nodeset = repeat['nodeset']
         inputs = repeat['input']
         return self.call_appropriate(inputs, self.create_question)
 

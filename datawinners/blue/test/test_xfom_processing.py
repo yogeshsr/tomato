@@ -1,4 +1,3 @@
-import base64
 import tempfile
 import unittest
 from django.test import Client
@@ -77,7 +76,7 @@ class TestXFormProcessing(unittest.TestCase):
         # credentials = base64.b64encode('tester150411@gmail.com:tester150411')
         # client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
 
-        r = client.get(path='/xforms/6f5b03cc827611e39ed7001c42af7554')
+        r = client.get(path='/xforms/0a31db56833e11e3b3fd001c42af7554')
         self.assertEquals(r.status_code, 200)
 
     def test_should_save_xform_submission(self):
@@ -95,5 +94,5 @@ class TestXFormProcessing(unittest.TestCase):
                 {'xml_submission_file': example_file},
         )
 
-        self.assertEquals(r.status_code, 200)
-        self.assertNotEqual(r._container[0].find('project_name'), -1)
+        self.assertEquals(r.status_code, 201)
+        self.assertIsNotNone(r.get('location', None))
