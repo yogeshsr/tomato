@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from copy import copy
 import traceback
 from mangrove.datastore.entity import by_short_code
@@ -21,6 +22,9 @@ class SurveyResponseService(object):
 
     def save_survey(self, form_code, values, reporter_names, transport_info, message, reporter_id,
                     additional_feed_dictionary=None):
+        #todo remove this hack
+        values.update({'eid':'rep276'})
+
         reporter = by_short_code(self.dbm, reporter_id.lower(), REPORTER_ENTITY_TYPE)
         survey_response = SurveyResponse(self.dbm, transport_info, form_code, copy(values), owner_uid=reporter.id,
                                          admin_id=self.admin_id or reporter_id)
@@ -34,7 +38,8 @@ class SurveyResponseService(object):
         #TODO : validate_submission should use form_model's bound values
         form_model.bind(values)
         if form_model.xform:
-            cleaned_data, errors = values, []
+            cleaned_data, errors = values, OrderedDict()
+            self.feeds_dbm = None
         else:
             cleaned_data, errors = form_model.validate_submission(values=values)
 
@@ -48,6 +53,9 @@ class SurveyResponseService(object):
         except MangroveException as exception:
             errors = exception.message
             raise
+        except Exception:
+            #todo since form_submission.save will fail calling _values; to be fixed later if required
+            pass
         finally:
             survey_response.set_status(errors)
             survey_response.create(form_submission.data_record_id)
