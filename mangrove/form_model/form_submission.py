@@ -9,7 +9,7 @@ from mangrove.utils.types import is_empty, is_not_empty
 class FormSubmission(object):
     def __init__(self, form_model, form_answers, errors=None, location_tree=None):
         assert errors is None or type(errors) == OrderedDict
-        assert form_answers is not None and type(form_answers) == OrderedDict
+        # assert form_answers is not None and type(form_answers) == OrderedDict
         assert form_model is not None
 
         self.form_model = form_model
@@ -70,6 +70,8 @@ class FormSubmission(object):
         return self.data_record_id
 
     def _to_three_tuple(self):
+        for (code, value) in (self.cleaned_data.items()):
+            pass
         return [(self.form_model._get_field_by_code(code).name, value, self.form_model._get_field_by_code(code).ddtype)
                 for (code, value) in
                 (self.cleaned_data.items())]

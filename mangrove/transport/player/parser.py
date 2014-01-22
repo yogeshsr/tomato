@@ -331,11 +331,8 @@ class XFormParser(object):
             return str(value)
         return "".join(value) if value is not None else None
 
-    def last_value(self, input_str):
-        return input_str.rsplit('/', 1)[-1]
-
     def _format_field(self, field, values):
-        code = self.last_value(field.code)
+        code = field.code
         if type(field) == SelectField and field.single_select_flag == False:
             values[code] = values[code].replace(' ', '')
         if type(field) == GeoCodeField:
