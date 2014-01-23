@@ -13,36 +13,16 @@
                         {% endif %}
                     {% endfor %}
                     <form_code>{{ questionnaire.form_code }}</form_code>
-                      <familyname/>
-                      <family jr:template="">
-                        <name/>
-                        <age/>
-                      </family>
-
                 </data>
             </instance>
             {% for field in questionnaire.fields %}
                 <bind nodeset="/data/{{ field.code }}" type="{{ field_types.get(field.type,field.type) }}" constraint="{{ field.xform_constraints() }}" required="{{ 'true()' if field.is_required() else 'false()'}}"/>
             {% endfor %}
             <bind nodeset="/data/form_code" type="string">{{ questionnaire.form_code }}</bind>
-            <bind nodeset="/data/familyname" type="string"/>
-            <bind nodeset="/data/family/name" type="string"/>
-            <bind nodeset="/data/family/age" type="int"/>
 
         </model>
     </h:head>
     <h:body>
-        <group ref="/data/family">
-          <label/>
-          <repeat nodeset="/data/family">
-            <input ref="/data/family/name">
-              <label>What is the member name?</label>
-            </input>
-            <input ref="/data/family/age">
-              <label>Enter age</label>
-            </input>
-          </repeat>
-        </group>
         {% block entity_body %}{% endblock %}
         {% for field in questionnaire.fields %}
             {% if not field.is_entity_field %}
