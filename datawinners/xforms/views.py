@@ -44,6 +44,9 @@ def restrict_request_country(f):
 @restrict_request_country
 def formList(request):
     rows = get_all_project_for_user(request.user)
+    # todo implement some sorting; Return all projects
+    # rows = sorted(rows, key=lambda x:x['value']['created'], reverse=False)
+    rows = rows[-5:]
     form_tuples = [(row['value']['name'], row['value']['qid']) for row in rows]
     xform_base_url = request.build_absolute_uri('/xforms')
     response = HttpResponse(content=list_all_forms(form_tuples, xform_base_url), mimetype="text/xml")
@@ -66,6 +69,7 @@ def __authorized_to_make_submission_on_requested_form(request_user, submission_f
 
 @csrf_exempt
 @restrict_request_country
+@httpdigest
 def submission(request):
     if request.method != 'POST':
         response = HttpResponse(status=204)
@@ -95,6 +99,7 @@ def submission(request):
             ))
 
         response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
+        submission_id = response.submission_id
         mail_feed_errors(response, manager.database_name)
         if response.errors:
             logger.error("Error in submission : \n%s" % get_errors(response.errors))
@@ -110,9 +115,10 @@ def submission(request):
     check_quotas_and_update_users(organization)
     response = HttpResponse(status=201)
     response['Location'] = request.build_absolute_uri(request.path)
+    response['submission_id'] = submission_id
     return response
 
-
+@httpdigest
 @csrf_exempt
 def xform(request, questionnaire_code=None):
     request_user = request.user

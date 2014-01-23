@@ -116,6 +116,7 @@ class MangroveService():
         self.project_state = 'Test'
         self.language = 'en'
         self.xform = xform_as_string
+        self.xform_with_form_code = self._add_from_code(xform_as_string, self.questionnaire_code)
         self.json_xform_data = json_xform_data
 
     def _create_questionnaire(self):
@@ -134,9 +135,32 @@ class MangroveService():
         form_model = FormModel(self.manager, entity_type=self.entity_type, name=self.name, type='survey',
                                state=self.project_state, fields=[], form_code=self.questionnaire_code, language=self.language)
         QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(self.json_xform_data)
-        form_model.xform=self.xform
+        form_model.xform = self.xform_with_form_code
         questionnaire_id = form_model.save()
         return questionnaire_id
+
+    def _add_form_code_bind_element(self, root):
+        project_name = [r.text for r in root.iter('{http://www.w3.org/1999/xhtml}title')][0]
+        node_set = '/%s/form_code' % project_name
+        [ET.SubElement(r, '{http://www.w3.org/2002/xforms}bind', {'nodeset': node_set, 'type': "string"}) for r in root.getiterator() if
+            r.tag == '{http://www.w3.org/2002/xforms}model']
+
+    def _add_from_code_element(self, form_code, root):
+        project_name = [r.text for r in root.iter('{http://www.w3.org/1999/xhtml}title')][0]
+        a = '{http://www.w3.org/2002/xforms}%s' % project_name
+        [self._assign(r, form_code) for r in root.iter(a)]
+
+    def _add_from_code(self, xform, form_code):
+        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
+        root = ET.fromstring(xform)
+        self._add_form_code_bind_element(root)
+        self._add_from_code_element(form_code, root)
+        return '<?xml version="1.0"?>%s' % ET.tostring(root)
+
+    def _assign(self, instance, form_code):
+        e = ET.SubElement(instance,'{http://www.w3.org/2002/xforms}form_code')
+        e.text = form_code
+        return e
 
     def create_project(self):
         questionnaire_id = self._create_questionnaire()
