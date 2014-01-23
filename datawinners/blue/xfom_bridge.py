@@ -175,6 +175,6 @@ class MangroveService():
         ngo_admin = NGOUserProfile.objects.get(user=self.user)
         project.data_senders.append(ngo_admin.reporter_id)
 
-        p = project.save(self.manager)
+        id = project.save(self.manager)
 
-        return p, self.name
+        return id, self.name
