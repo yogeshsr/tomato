@@ -320,6 +320,7 @@ class XFormParser(object):
         return {code: self._to_str(value) if type(value) is not list else value for code, value in message.iteritems()}
 
     def parse(self, message):
+        #todo can this be improved
         submission_dict = xmldict.xml_to_dict(message).values()[0]
         form_code = submission_dict.pop('form_code')
         form_model = get_form_model_by_code(self.dbm, form_code)
