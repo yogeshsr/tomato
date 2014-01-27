@@ -3,9 +3,9 @@ from xml.etree import ElementTree as ET
 
 from django.contrib.auth.models import User
 from mangrove.errors.MangroveException import QuestionAlreadyExistsException
-from pyxform import create_survey_from_path, create_survey_element_from_dict
+from pyxform import create_survey_from_path, create_survey_element_from_dict, create_survey_from_xls
 from pyxform.xform2json import XFormToDict
-from pyxform.xls2json import workbook_to_json
+from pyxform.xls2json import workbook_to_json, SurveyReader
 from pyxform.xls2json_backends import xls_to_dict
 
 from datawinners.accountmanagement.models import NGOUserProfile
@@ -24,6 +24,7 @@ class XlsFormToJson():
         if is_path_to_file:
             survey = create_survey_from_path(file_content_or_path)
             self.xform_as_string = survey.to_xml()
+            self.file_path = file_content_or_path
         else:
             f = NamedTemporaryFile(delete=True)
             f.write(file_content_or_path)
@@ -36,6 +37,44 @@ class XlsFormToJson():
     def parse(self):
         return self.xform_as_string, XfromToJson(self.xform_as_string).parse()
 
+    def parse_new(self):
+        excel_reader = SurveyReader(self.file_path)
+        d = excel_reader.to_json_dict()
+        questions = []
+        for c in d['children']:
+            if c['type'] == 'repeat':
+                questions.append(self._repeat(c))
+            elif c['type'] in ['text', 'int', 'date']:
+                questions.append(self._field(c))
+        return self.xform_as_string, questions
+
+    def _repeat(self, repeat):
+        group_label = repeat['label']
+        if not group_label: #todo create appropriate error class
+            raise QuestionAlreadyExistsException('Unique repeat label is required')
+        group_name = repeat['name']
+        children = repeat['children']
+        questions = []
+        questions.extend([self._field(c) for c in children])
+        q = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
+                 "code": group_name, "name": group_label, 'required': False,
+                 "instruction": "No answer required",
+                 'fields':questions}
+        return q
+
+    def _field(self, field):
+        xform_dw_type_dict = {'text': 'text', 'int': 'integer', 'date': 'date'}
+        help_dict = {'text': 'word', 'int': 'number', 'date': 'date'}
+        name = field['label']
+        code = field['name']
+        type = field['type']
+        q = {'title': name, 'type': xform_dw_type_dict[type], "is_entity_question": False,
+                 "code": code, "name": name, 'required': True,
+                 "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
+        if type == 'date':
+                q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
+                          "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
+        return q
 
 class XfromToJson():
 
@@ -49,6 +88,9 @@ class XfromToJson():
         xform_dict = XFormToDict(self.xform).get_dict()
         self.name_attrib_dict = {self.last_value(bind['nodeset']): bind for bind in xform_dict['html']['head']['model']['bind']}
         questions = []
+
+        [f['nodeset'] for f in xform_dict['html']['head']['model']['bind'] if f['nodeset'].find]
+
         groups = xform_dict['html']['body'].get('group')
         if groups:
             questions.extend(self.call_appropriate(groups,self.convert_group))

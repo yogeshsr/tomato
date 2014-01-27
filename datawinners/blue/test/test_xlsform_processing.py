@@ -1,10 +1,15 @@
 from __builtin__ import type
 import base64
+import hashlib
+import os
 import tempfile
 import unittest
 from django.test import Client
+from pyxform.xls2json import SurveyReader
+from requests.utils import parse_dict_header
 from rest_framework.test import APIClient
 from xml.etree import ElementTree as ET
+import time
 from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson
 from mangrove.form_model.field import FieldSet
 from mangrove.form_model.form_model import get_form_model_by_code
@@ -13,12 +18,12 @@ from mangrove.form_model.form_model import get_form_model_by_code
 class TestXLSFormProcessing(unittest.TestCase):
 
     TEST_XLSFORMS = [
-        'text_and_integer.xls', 'repeat.xls'
+        'text_and_integer.xls', 'repeat.xls', 'many-fields.xls'
     ]
 
     def test_should_create_project_using_xlsform_file_path(self):
 
-        xform_as_string, json_xform_data = XlsFormToJson(self.TEST_XLSFORMS[1], is_path_to_file=True).parse()
+        xform_as_string, json_xform_data = XlsFormToJson(self.TEST_XLSFORMS[2], is_path_to_file=True).parse()
 
         mangroveService = MangroveService(xform_as_string, json_xform_data)
         id, name = mangroveService.create_project()
@@ -36,25 +41,114 @@ class TestXLSFormProcessing(unittest.TestCase):
         self.assertIsNotNone(id)
         self.assertIsNotNone(name)
 
+
+    def test_xlsform_conversion_to_xform_and_json(self):
+        parser = XlsFormToJson(self.TEST_XLSFORMS[1], True)
+
+        xform, json_xform_data = parser.parse_new()
+
+        self.assertIsNotNone(json_xform_data)
+        self.assertIsNotNone(xform)
+
+    def test_sequence_of_the_fields_in_form_model_should_be_same_as_in_xlsform(self):
+
+        xform_as_string, json_xform_data = XlsFormToJson(self.TEST_XLSFORMS[2], is_path_to_file=True).parse()
+
+        self.assertIsNotNone(xform_as_string)
+        names = [f['code'] for f in json_xform_data]
+        expected_names = ["a312name1312","a528name2528","a972name3972","a667name4667","a868name5868","a970name6970","a870name7870","a320name8320","a863name9863","a509name10509","a191name11191","a216name12216","a320name13320","a165name14165","a116name15116","a413name16413","a568name17568","a379name18379","a863name19863","a929name20929","a640name21640","a392name22392","a264name23264","a868name24868","a191name25191","a316name26316","a908name27908","a488name28488","a455name29455","a802name30802","a595name31595","a668name32668","a329name33329","a566name34566","a335name35335","a197name36197","a536name37536","a204name38204","a418name39418","a399name40399","a614name41614","a510name42510","a515name43515","a835name44835","a575name45575","a531name46531","a247name47247","a143name48143","a811name49811","a110name50110"]
+        self.assertEqual(names, expected_names)
+
+    def _repeat_codes(self, repeat):
+        code = repeat['code']
+        children_code = [f['code'] for f in repeat['fields']]
+        r = []
+        r.append(code)
+        r.append(children_code)
+        return r
+
+    def test_sequence_of_the_mixed_type_fields_in_from_model_should_be_same_as_xlsform(self):
+        parser = XlsFormToJson(self.TEST_XLSFORMS[1], True)
+
+        xform, json_xform_data = parser.parse_new()
+
+        names = [f['code'] if f['type'] != 'field_set' else self._repeat_codes(f) for f in json_xform_data]
+        expected_names = ['familyname',
+                          ['family',['name','age']],
+                          'city',
+                          ['house',['name','room','numberofrooms']]]
+        self.assertEqual(names, expected_names)
+
     def test_should_update_xform_submission_with_reporter_id(self):
-        client = APIClient()
-        client.credentials(username='tester150411@gmail.com', password='tester150411')
+        client = Client()
+        # client.login(username='tester150411@gmail.com', password='tester150411')
+        # client.
         auth_headers = {
             'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode('tester150411@gmail.com:tester150411'),
         }
+        response = client.post('/xforms/submission',
+                                         {'example': 'example'})
+        auth = self.build_digest_header('tester150411@gmail.com',
+                                   'tester150411',
+                                   response['WWW-Authenticate'],
+                                   'POST',
+                                   '/xforms/submission')
+
         with tempfile.NamedTemporaryFile(suffix='.txt') as example_file:
             example_file.write(open('repeat-submission.xml', 'r').read())
             example_file.seek(0)
             r = client.post(
                 '/xforms/submission',
-                {'xml_submission_file': example_file}, **auth_headers
+                {'xml_submission_file': example_file}, HTTP_AUTHORIZATION=auth
         )
-
+        # r = client.post(
+        #         '/xforms/submission',
+        #          HTTP_AUTHORIZATION=auth
+        # )
         self.assertEquals(r.status_code, 201)
         submission_id = r.get('submission_id', None)
         self.assertIsNotNone(submission_id)
 
         # todo fetch submission and verify
+
+    def build_digest_header(self, username, password, challenge_header, method, path):
+        challenge_data = parse_dict_header(challenge_header.replace('Digest ', ''))
+        realm = challenge_data['realm']
+        nonce = challenge_data['nonce']
+        qop = challenge_data['qop']
+        opaque = challenge_data['opaque']
+
+        def md5_utf8(x):
+            if isinstance(x, str):
+                x = x.encode('utf-8')
+            return hashlib.md5(x).hexdigest()
+        hash_utf8 = md5_utf8
+
+        KD = lambda s, d: hash_utf8("%s:%s" % (s, d))
+
+        A1 = '%s:%s:%s' % (username, realm, password)
+        A2 = '%s:%s' % (method, path)
+
+        nonce_count = 1
+        ncvalue = '%08x' % nonce_count
+        s = str(nonce_count).encode('utf-8')
+        s += nonce.encode('utf-8')
+        s += time.ctime().encode('utf-8')
+        s += os.urandom(8)
+
+        cnonce = (hashlib.sha1(s).hexdigest()[:16])
+        noncebit = "%s:%s:%s:%s:%s" % (nonce, ncvalue, cnonce, qop, hash_utf8(A2))
+        respdig = KD(hash_utf8(A1), noncebit)
+
+        base = 'username="%s", realm="%s", nonce="%s", uri="%s", '\
+               'response="%s", algorithm="MD5"'
+        base = base % (username, realm, nonce, path, respdig)
+
+        if opaque:
+            base += ', opaque="%s"' % opaque
+        if qop:
+            base += ', qop=auth, nc=%s, cnonce="%s"' % (ncvalue, cnonce)
+        return 'Digest %s' % base
 
     def test_xform_is_the_default_namespace(self):
         # while parsing submission we assume that xform element without namespace since being default.
