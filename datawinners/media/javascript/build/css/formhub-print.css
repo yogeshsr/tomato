@@ -1,0 +1,191 @@
+body {
+  background: none;
+}
+body .main {
+  margin: 0;
+}
+body .main article {
+  padding: 3px;
+}
+body .paper {
+  border: none;
+  margin: 0;
+}
+
+.drawer,
+#feedback-bar,
+#dialog-alert,
+#dialog-confirm,
+#dialog-save,
+#form-languages,
+.form-header,
+.enketo-power,
+.or-appearance-no-print,
+button,
+.paper #submit-form {
+  display: none !important;
+}
+
+.or .hint,
+.or .or-appearance-no-print,
+.or .question:not(.or-appearance-maps) .map-canvas-wrapper,
+.or .geopoint .search-bar,
+.or .or-constraint-msg,
+.or .required-subtle,
+.or .add-on,
+.or button,
+.or .invalid-required .or-required-msg.active,
+.or .invalid-constraint .or-constraint-msg.active {
+  display: none !important;
+}
+.or .or-branch.disabled {
+  opacity: 1;
+  display: block !important;
+}
+
+.or-hint.active {
+  margin-top: 0;
+  line-height: 1em;
+}
+
+legend {
+  margin-bottom: 5px;
+}
+legend ~ label {
+  padding: 0;
+}
+
+.geopoint.widget {
+  margin-top: 0;
+  max-height: 60px;
+}
+.geopoint.widget .geo-inputs {
+  width: 100%;
+}
+.geopoint.widget .geo-inputs label.geo {
+  display: inline-block;
+  width: 25%;
+  margin: 0 !important;
+}
+.geopoint.widget .geo-inputs label.geo:nth-of-type(3), .geopoint.widget .geo-inputs label.geo:nth-of-type(4) {
+  margin-top: 0;
+  padding-top: 0;
+  font-size: inherit;
+  border-top: none;
+  font-size: auto;
+}
+.geopoint.widget .geo-inputs label.geo input {
+  display: none;
+}
+
+.bootstrap-select:before, .bootstrap-select:after {
+  content: " ";
+  display: table;
+}
+.bootstrap-select:after {
+  clear: both;
+}
+.bootstrap-select .dropdown-toggle {
+  display: none;
+}
+.bootstrap-select ul {
+  position: static;
+  display: block;
+  border: none;
+  box-shadow: none;
+  list-style-type: circle;
+}
+.bootstrap-select ul li, .bootstrap-select ul li.active {
+  display: inline-block;
+  border: 1px solid #000000;
+  margin-right: 20px;
+}
+.bootstrap-select ul a {
+  background: none;
+  color: black;
+}
+.bootstrap-select ul input {
+  display: none;
+}
+
+.page-break {
+  display: block;
+  color: transparent;
+  border-bottom: none;
+  page-break-before: always !important;
+}
+
+.or {
+  /*input[type="checkbox"]{
+    display: none !important;
+    ~ .active{
+      -webkit-print-color-adjust:exact;
+      margin-left: 15px;
+      padding-left: 35px;
+    background: ;
+    } }
+  input[type="radio"]{
+    display: none !important;
+    ~ .active{
+      -webkit-print-color-adjust:exact;
+      margin-left: 15px;
+      padding-left: 35px;
+      background: 
+    } }*/
+}
+.or h2, .or h3, .or h4, .or .required {
+  color: black;
+}
+.or legend span {
+  display: block;
+}
+.or .trigger {
+  font-weight: normal;
+  border: 1px solid black;
+  background: none;
+  color: black;
+}
+.or label > span.or-hint.active {
+  color: black;
+  display: block;
+}
+.or .required {
+  float: right;
+}
+.or .or-repeat {
+  background: none;
+}
+.or input:not([type="radio"]):not([type="checkbox"]), .or select, .or textarea {
+  border-radius: 0px;
+  box-shadow: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: none;
+  border-bottom: 1px solid black;
+}
+.or input[type="file"] {
+  display: none !important;
+}
+.or input[type="radio"] {
+  -webkit-appearance: radio;
+}
+.or input[type="checkbox"] {
+  -webkit-appearance: checkbox;
+}
+.or textarea {
+  -webkit-print-color-adjust: exact;
+  background-image: url("/images/line.png");
+  background-repeat: repeat;
+}
+.or .geopoint {
+  height: 280px;
+}
+.or .geopoint .map-canvas {
+  bottom: 0;
+  width: 450px;
+}
+.or .geopoint label.geo:nth-of-type(3) {
+  border-top: none;
+}

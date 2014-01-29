@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django_digest.decorators import httpdigest
 from datawinners.feeds.database import get_feeds_database
 from datawinners.feeds.mail_client import mail_feed_errors
-from datawinners.main.database import get_database_manager, get_mgr
+from datawinners.main.database import get_database_manager
 from mangrove.transport.contract.request import Request
 from mangrove.transport.contract.transport_info import TransportInfo
 from mangrove.transport.player.new_players import XFormPlayerV2
