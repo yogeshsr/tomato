@@ -7,7 +7,7 @@ from datawinners.project.views.import_submissions_views import ImportSubmissionV
 from datawinners.project.wizard_view import create_project, edit_project, reminders, reminder_settings
 from datawinners.project.preview_views import sms_preview, web_preview, smart_phone_preview, questionnaire_sms_preview, questionnaire_web_preview
 from datawinners.project.views import submission_views
-from datawinners.project.views.views import questionnaire, create_data_sender_and_web_user, questionnaire_preview, subject_registration_form_preview, sender_registration_form_preview, project_overview, registered_subjects, create_reminder, get_reminder, delete_reminder, broadcast_message, manage_reminders, sent_reminders, activate_project, delete_project, undelete_project, review_and_test, edit_my_subject_questionnaire, project_has_data, save_questionnaire, index, subject_web_questionnaire, survey_web_questionnaire, edit_my_subject
+from datawinners.project.views.views import questionnaire, create_data_sender_and_web_user, questionnaire_preview, subject_registration_form_preview, sender_registration_form_preview, project_overview, registered_subjects, create_reminder, get_reminder, delete_reminder, broadcast_message, manage_reminders, sent_reminders, activate_project, delete_project, undelete_project, review_and_test, edit_my_subject_questionnaire, project_has_data, save_questionnaire, index, subject_web_questionnaire, survey_web_questionnaire, edit_my_subject, xform_questionnaire
 
 js_info_dict = {
     'domain': 'djangojs',
@@ -19,8 +19,10 @@ urlpatterns = patterns('',
                        url(r'^project/questionnaire/(?P<project_id>\w+?)/$', questionnaire, name='questionnaire'),
                        url(r'^project/register_subjects/(?P<project_id>\w+?)/$', subject_web_questionnaire,
                            name="subject_questionnaire"),
-                       url(r'^project/testquestionnaire/(?P<project_id>\w+?)/$', survey_web_questionnaire,
+                       url(r'^project/xformquestionnaire/(?P<project_id>\w+?)/$', xform_questionnaire,
                            name="web_questionnaire"),
+                       url(r'^project/testquestionnaire/(?P<project_id>\w+?)/$', survey_web_questionnaire,
+                           name="xform_questionnaire"),
                        (r'^project/register_datasenders/(?P<project_id>\w+?)/$', create_data_sender_and_web_user),
                        url(r'^project/preview/questionnaire/(?P<project_id>\w+?)/$', questionnaire_preview,
                            name="questionnaire_preview"),

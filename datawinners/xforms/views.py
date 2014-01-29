@@ -1,11 +1,12 @@
 import logging
 import xml
+from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django_digest.decorators import httpdigest
 from datawinners.feeds.database import get_feeds_database
 from datawinners.feeds.mail_client import mail_feed_errors
-from datawinners.main.database import get_database_manager
+from datawinners.main.database import get_database_manager, get_mgr
 from mangrove.transport.contract.request import Request
 from mangrove.transport.contract.transport_info import TransportInfo
 from mangrove.transport.player.new_players import XFormPlayerV2
@@ -39,9 +40,9 @@ def restrict_request_country(f):
     return wrapper
 
 
-@csrf_exempt
-@httpdigest
-@restrict_request_country
+# @csrf_exempt
+# @httpdigest
+# @restrict_request_country
 def formList(request):
     rows = get_all_project_for_user(request.user)
     # todo implement some sorting; Return all projects
@@ -68,24 +69,28 @@ def __authorized_to_make_submission_on_requested_form(request_user, submission_f
 
 
 @csrf_exempt
-@restrict_request_country
-@httpdigest
+# @restrict_request_country
+# @httpdigest
 def submission(request):
     if request.method != 'POST':
         response = HttpResponse(status=204)
         response['Location'] = request.build_absolute_uri()
         return response
 
-    request_user = request.user
-    submission_file = request.FILES.get("xml_submission_file").read()
-    f = open('sample.xml','w')
-    f.write(submission_file)
-    f.close()
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    if request.FILES.get("xml_submission_file"):
+        submission_file = request.FILES.get("xml_submission_file").read()
+    else:
+        submission_file = request.POST['a']
+    # for debugging
+    # f = open('sample.xml','w')
+    # f.write(submission_file)
+    # f.close()
 
-    if not __authorized_to_make_submission_on_requested_form(request_user, submission_file) \
-        or is_quota_reached(request):
-        response = HttpResponse(status=403)
-        return response
+    # if not __authorized_to_make_submission_on_requested_form(request_user, submission_file) \
+    #     or is_quota_reached(request):
+    #     response = HttpResponse(status=403)
+    #     return response
 
     manager = get_database_manager(request_user)
     player = XFormPlayerV2(manager, get_feeds_database(request_user))
