@@ -44,7 +44,8 @@ def restrict_request_country(f):
 # @httpdigest
 # @restrict_request_country
 def formList(request):
-    rows = get_all_project_for_user(request.user)
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    rows = get_all_project_for_user(request_user)
     # todo implement some sorting; Return all projects
     # rows = sorted(rows, key=lambda x:x['value']['created'], reverse=False)
     rows = rows[-5:]
@@ -123,9 +124,10 @@ def submission(request):
     response['submission_id'] = submission_id
     return response
 
-@httpdigest
-@csrf_exempt
+# @httpdigest
+# @csrf_exempt
 def xform(request, questionnaire_code=None):
-    request_user = request.user
+    request_user = User.objects.get(username='tester150411@gmail.com')
+    # request_user = request.user
     form = xform_for(get_database_manager(request_user), questionnaire_code, request_user.get_profile().reporter_id)
     return HttpResponse(content=form, mimetype="text/xml")

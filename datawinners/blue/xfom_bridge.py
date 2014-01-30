@@ -20,7 +20,7 @@ from datawinners.search import *
 
 class XlsFormToJson():
 
-    def __init__(self, file_content_or_path, is_path_to_file=False):
+    def __init__(self, file_content_or_path, is_path_to_file=False, project_name='Project'):
         if is_path_to_file:
             survey = create_survey_from_path(file_content_or_path)
             self.xform_as_string = survey.to_xml()
@@ -30,7 +30,7 @@ class XlsFormToJson():
             f.write(file_content_or_path)
             f.seek(0)
             workbook_dict = xls_to_dict(f)
-            json_dict = workbook_to_json(workbook_dict, form_name='some_name')
+            json_dict = workbook_to_json(workbook_dict, form_name=project_name)
             survey = create_survey_element_from_dict(json_dict)
             self.xform_as_string = survey.to_xml()
 
@@ -149,12 +149,12 @@ class XfromToJson():
 
 class MangroveService():
 
-    def __init__(self, xform_as_string, json_xform_data):
+    def __init__(self, xform_as_string, json_xform_data, project_name=None):
         self.user = User.objects.get(username="tester150411@gmail.com")
         self.manager = get_database_manager(self.user)
         self.entity_type = ['reporter']
         self.questionnaire_code =  generate_questionnaire_code(self.manager)
-        self.name = 'Xlsform Project-' + self.questionnaire_code
+        self.name = 'Xlsform Project-' + self.questionnaire_code if not project_name else project_name + "-" + self.questionnaire_code
         self.project_state = 'Test'
         self.language = 'en'
         self.xform = xform_as_string

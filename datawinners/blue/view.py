@@ -28,13 +28,13 @@ class ProjectUpload(View):
 
     def post(self, request):
 
-        file_name = request.GET.get('qqfile')
+        file_name = request.GET.get('qqfile').split('.')[0]
         file = request.raw_post_data
 
-        xform_as_string, json_xform_data = XlsFormToJson(file).parse()
+        xform_as_string, json_xform_data = XlsFormToJson(file, project_name=file_name).parse()
 
         # mangrove code
-        mangroveService = MangroveService(xform_as_string, json_xform_data)
+        mangroveService = MangroveService(xform_as_string, json_xform_data, project_name=file_name)
         id, name = mangroveService.create_project()
 
 
