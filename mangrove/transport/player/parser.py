@@ -316,12 +316,16 @@ class XFormParser(object):
     def __init__(self, dbm):
         self.dbm = dbm
 
+    def is_field_set_answer(self, value):
+        return type(value) is list
+
     def _fetch_string_value(self, message):
-        return {code: self._to_str(value) if type(value) is not list else value for code, value in message.iteritems()}
+        return {code: self._to_str(value) if not self.is_field_set_answer(value) else value
+                    for code, value in message.iteritems()}
 
     def parse(self, message):
-        #todo can this be improved
-        submission_dict = xmldict.xml_to_dict(message).values()[0]
+        submission_dict = xmldict.xml_to_dict(str(message)).values()[0]
+        # xform elements don't have namespace information since it's being default, so form_code don't include namespace
         form_code = submission_dict.pop('form_code')
         form_model = get_form_model_by_code(self.dbm, form_code)
         self.__format_response_fields(form_model, submission_dict)
@@ -331,6 +335,23 @@ class XFormParser(object):
         if isinstance(value, (int, float, long)):
             return str(value)
         return "".join(value) if value is not None else None
+
+    def _format_field_set(self, field, values):
+        single_answer = False
+        val = {}
+        for field in field.fields:
+            if type(values) is list:
+                for value in values:
+                    self._format_field(field, value)
+            else:
+                single_answer = True
+                self._format_field(field, values)
+                val.update({field.code: values[field.code]})
+        if single_answer:
+            # repeat answer has single group; convert value to list for consistency
+            values = [val]
+
+        return values
 
     def _format_field(self, field, values):
         code = field.code
@@ -345,12 +366,8 @@ class XFormParser(object):
         if type(field) == IntegerField:
             values[code] = "%g" % float(values[code])
         if type(field) == FieldSet:
-            vs = values[code]
-
-            for f in field.fields:
-                for vals in vs:
-                    self._format_field(f, vals)
-            values[code] = [self._fetch_string_value(r) for r in vs]
+            value_list = self._format_field_set(field, values[code])
+            values[code] =  [self._fetch_string_value(r) for r in value_list]
 
     def __format_response_fields(self, form_model, values):
         for field in form_model.fields:
