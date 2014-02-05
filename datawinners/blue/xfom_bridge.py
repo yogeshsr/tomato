@@ -2,6 +2,7 @@ from tempfile import NamedTemporaryFile
 from xml.etree import ElementTree as ET
 
 from django.contrib.auth.models import User
+import xmldict
 from mangrove.errors.MangroveException import QuestionAlreadyExistsException
 from pyxform import create_survey_from_path, create_survey_element_from_dict, create_survey_from_xls
 from pyxform.xform2json import XFormToDict
@@ -13,6 +14,7 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
+from mangrove.form_model.field import FieldSet
 from mangrove.form_model.form_model import FormModel
 
 # noinspection PyUnresolvedReferences
@@ -220,3 +222,60 @@ class MangroveService():
         id = project.save(self.manager)
 
         return id, self.name
+
+
+class XFormSubmissionProcessor():
+
+    def get_dict(self, field, value):
+        if type(field) is FieldSet:
+            dicts = []
+            for v in value:
+                dict = {}
+                for f in field.fields:
+                    dict.update(self.get_dict(f, v[f.code]))
+                dicts.append(dict)
+            return {field.code: dicts}
+        else:
+            return {field.code: value}
+
+    def create_xform_instance_of_submission(self, form_model_fields, submission_values):
+        d, s = {}, {}
+        for f in form_model_fields:
+            d.update(self.get_dict(f, submission_values[f.code]))
+        s.update({'instance':d})
+        instance_xml = xmldict.dict_to_xml(s)
+        instance_xml_with_ns = instance_xml.replace('>', ' xmlns="http://www.w3.org/2002/xforms">', 1)
+        return instance_xml_with_ns
+
+    def remove_and_add_new_instance(self, instance_node, new_instance_element):
+        project_model_node = [f for f in instance_node][0]
+
+        keep = ['{http://www.w3.org/2002/xforms}meta',
+            '{http://www.w3.org/2002/xforms}form_code']
+
+        keep_these = [child for child in project_model_node if child.tag in keep]
+        del project_model_node[:]
+        project_model_node.extend(keep_these)
+
+        #ET.register_namespace('', 'http://www.w3.org/2002/xforms')
+        et_fromstring = ET.fromstring(new_instance_element)
+
+        [project_model_node.append(f) for f in et_fromstring]
+
+        return project_model_node
+
+
+    def update_instance_children(self, xform, new_instance_element):
+        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
+        root = ET.fromstring(xform)
+        # todo find a better way instead of using getiterator
+        [self.remove_and_add_new_instance(e, new_instance_element)
+            for e in root.getiterator() if e.tag == '{http://www.w3.org/2002/xforms}instance']
+
+        return ET.tostring(root)
+
+
+    def xform_edit_submission(self, form_fields, xform, submission_values):
+        instance_xml = self.create_xform_instance_of_submission(form_fields, submission_values)
+        submission_xform = self.update_instance_children(xform, instance_xml)
+        return submission_xform

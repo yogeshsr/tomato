@@ -2,12 +2,16 @@ from __builtin__ import type
 import os
 import unittest
 from xml.etree import ElementTree as ET
+from django.contrib.auth.models import User
 
 from django.test import Client
 
-from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson
-from mangrove.form_model.field import FieldSet
+from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson, XFormSubmissionProcessor
+from datawinners.main.database import get_database_manager
+from mangrove.datastore.datadict import DataDictType
+from mangrove.form_model.field import FieldSet, TextField
 from mangrove.form_model.form_model import get_form_model_by_code
+from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
 DIR = os.path.dirname(__file__)
 
@@ -162,3 +166,46 @@ class TestXFormBridge(unittest.TestCase):
 
         self.assertEquals(r.status_code, 200)
         self.assertNotEqual(r._container[0].find('project_name'), -1)
+
+    def create_test_fields_and_survey(self):
+        request_user = User.objects.get(username='tester150411@gmail.com')
+        manager = get_database_manager(request_user)
+        default_ddtype = DataDictType(manager, name='default dd type', slug='string_default',
+                                      primitive_type='string')
+        #change this to reporter
+        #entity_field = TextField('clinic', 'ID', 'clinic label', default_ddtype, entity_question_flag=True)
+        city_field = TextField('city', 'city', 'What is the City name?', default_ddtype)
+        name_field = TextField('centername', 'centername', 'Center Name?', default_ddtype)
+        area_field = TextField('area', 'area', 'Area?', default_ddtype)
+        center_field_set = FieldSet('center', 'center', 'Center Information', default_ddtype, field_set=[name_field, area_field])
+        form_fields = [#entity_field,
+                       city_field, center_field_set]
+        survey_response_values = {'city': 'Bhopal',
+                                  'center': [{'centername': 'Boot', 'area': 'New Market'},
+                                             {'centername': 'Weene', 'area': 'Bgh'}], 'eid': 'rep276'}
+        return form_fields, survey_response_values
+
+    def test_should_create_xform_instance_for_submission(self):
+        form_fields, survey_response_values = self.create_test_fields_and_survey()
+        submissionProcessor = XFormSubmissionProcessor()
+        expected_xml = '<instance><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
+
+        instance_node_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+
+        self.assertEqual(expected_xml, instance_node_xml)
+
+    def test_should_update_xform_instance_with_submission_data(self):
+        xform_024 = open('testdata/xform-024.xml', 'r').read()
+        form_fields, survey_response_values = self.create_test_fields_and_survey()
+        submissionProcessor = XFormSubmissionProcessor()
+        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+
+        xform_with_submission = submissionProcessor.update_instance_children(xform_024, xform_instance_xml)
+
+        #todo asset submission in xml
+        print xform_with_submission
+
+
+    # def test_a(self):
+    #     f = open('testdata/contacts.csv','r').read(1024)
+    #     print f

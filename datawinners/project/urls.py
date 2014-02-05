@@ -81,6 +81,8 @@ urlpatterns = patterns('',
                            submission_views.analysis_results, name="submission_analysis"),
                        url(r'^project/(?P<project_id>.+?)/submissions/edit/(?P<survey_response_id>[^\\/]+?)/$',
                            submission_views.edit, name="submissions_edit"),
+                       url(r'^project/(?P<project_id>.+?)/submissions/edit_xform/(?P<survey_response_id>[^\\/]+?)/$',
+                           submission_views.edit_xform_submission, name="edit_xform_submission"),
                        url(
                            r'^project/(?P<project_id>.+?)/submissions/edit/(?P<survey_response_id>[^\\/]+?)/tab/(?P<tab>[^\\/]+?)/$',
                            submission_views.edit, name="submissions_edit"),
