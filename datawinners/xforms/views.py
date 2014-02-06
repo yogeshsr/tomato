@@ -68,7 +68,6 @@ def __authorized_to_make_submission_on_requested_form(request_user, submission_f
     requested_qid = dom.documentElement.getAttribute('id')
     return True #todo requested_qid in questionnaire_ids
 
-
 @csrf_exempt
 # @restrict_request_country
 # @httpdigest
@@ -103,8 +102,11 @@ def submission(request):
                 source=request_user.email,
                 destination=''
             ))
-
-        response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
+        survey_response_id = request.GET.get('survey_response_id', '')
+        if survey_response_id:
+            response = player.update_survey_response(mangrove_request, user_profile.reporter_id, logger=sp_submission_logger, survey_response_id=survey_response_id)
+        else:
+            response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
         submission_id = response.submission_id
         mail_feed_errors(response, manager.database_name)
         if response.errors:

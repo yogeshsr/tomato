@@ -69,7 +69,7 @@ function handle_submission_log_delete(table, selected_ids, all_selected, project
 function handle_submission_log_edit(table, selected_ids, all_selected, active_tab_index, project_id) {
     survey_response_id = selected_ids[0];
     //location.href = '/project/' + project_id + '/submissions/edit/' + survey_response_id + '/tab/' + active_tab_index
-    location.href = 'http://localhost:8000/media/javascript/en.html?xform=' + 'http://localhost:8000/project/' + project_id + '/submissions/edit_xform/' + survey_response_id
+    location.href = 'http://localhost:8000/media/javascript/en.html?survey='+survey_response_id+'&xform=' + 'http://localhost:8000/project/' + project_id + '/submissions/edit_xform/' + survey_response_id
 }
 
 function removeRowsFromDataTable(ids) {
