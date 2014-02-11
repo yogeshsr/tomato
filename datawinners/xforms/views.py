@@ -107,7 +107,7 @@ def submission(request):
             response = player.update_survey_response(mangrove_request, user_profile.reporter_id, logger=sp_submission_logger, survey_response_id=survey_response_id)
         else:
             response = player.add_survey_response(mangrove_request, user_profile.reporter_id ,logger=sp_submission_logger)
-        submission_id = response.submission_id
+        submission_id = response.survey_response_id
         mail_feed_errors(response, manager.database_name)
         if response.errors:
             logger.error("Error in submission : \n%s" % get_errors(response.errors))
