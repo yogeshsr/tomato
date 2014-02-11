@@ -123,10 +123,10 @@
     <li class="{% ifactivetab 'secondary_tab_nav' 'web_questionnaire' %}active{% else %}inactive{% endifactivetab %}">
         <a href="{{ project_links.test_questionnaire_link }}">{% trans "Web Submission" %}</a>
     </li>
-    <li class="{% ifactivetab 'secondary_tab_nav' 'web_questionnaire' %}inactive{% else %}inactive{% endifactivetab %}">
-        <a href="{{ project_links.enketo_link }}">{% trans "Enketo Submission" %}</a>
-    </li>
     {% endif %}
+    <li class="{% ifactivetab 'secondary_tab_nav' 'xform_web_questionnaire' %}active{% else %}inactive{% endifactivetab %}">
+        <a href="{{ project_links.xform_link }}">{% trans "XForm Submission" %}</a>
+    </li>
 </ul>
 {% endblock %}
 

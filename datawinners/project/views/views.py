@@ -2,6 +2,7 @@
 import json
 import datetime
 import logging
+import re
 from time import mktime
 
 from django.contrib.auth.decorators import login_required
@@ -702,7 +703,15 @@ class SurveyWebQuestionnaireRequest():
 
     @property
     def template(self):
-        return 'project/data_submission.html' if self.is_data_sender else "project/web_questionnaire.html"
+        url = ''
+        if self.is_data_sender:
+            url = 'project/data_submission.html'
+        elif self.form_model.xform:
+            url = 'project/xform_web_questionnaire.html'
+        else:
+            url = "project/web_questionnaire.html"
+
+        return url
 
     def response_for_get_request(self, initial_data=None, is_update=False):
         dashboard_page = settings.HOME_PAGE + "?deleted=true"
@@ -711,6 +720,8 @@ class SurveyWebQuestionnaireRequest():
         questionnaire_form = self.form(initial_data=initial_data)
         form_context = get_form_context(self.form_model.form_code, self.project, questionnaire_form,
                                         self.manager, self.hide_link_class, self.disable_link_class, is_update)
+        if self.form_model.xform:
+            form_context.update({'xform_xml':re.sub(r"\n", " ", self.form_model.xform)})
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
@@ -804,6 +815,22 @@ def survey_web_questionnaire(request, project_id=None):
     elif request.method == 'POST':
         return survey_request.response_for_post_request()
 
+@login_required(login_url='/login')
+@session_not_expired
+@is_project_exist
+@is_datasender_allowed
+@project_has_web_device
+@is_not_expired
+def xform_survey_web_questionnaire(request, project_id=None):
+    survey_request = SurveyWebQuestionnaireRequest(request, project_id)
+    if request.method == 'GET':
+        return survey_request.response_for_get_request()
+
+    # subject_request = SubjectWebQuestionnaireRequest(request, project_id)
+    # if request.method == 'GET':
+    #     return subject_request.response_for_get_request()
+    # elif request.method == 'POST':
+    #     return subject_request.post()
 
 @login_required(login_url='/login')
 @session_not_expired
