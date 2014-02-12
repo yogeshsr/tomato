@@ -1,14 +1,11 @@
-from tempfile import NamedTemporaryFile
 from xml.etree import ElementTree as ET
 
 from django.contrib.auth.models import User
 import xmldict
-from mangrove.errors.MangroveException import QuestionAlreadyExistsException
-from pyxform import create_survey_from_path, create_survey_element_from_dict, create_survey_from_xls
-from pyxform.xform2json import XFormToDict
-from pyxform.xls2json import workbook_to_json, SurveyReader
-from pyxform.xls2json_backends import xls_to_dict
+from pyxform import create_survey_element_from_dict
+from pyxform.xls2json import parse_file_to_json
 
+from mangrove.errors.MangroveException import QuestionAlreadyExistsException
 from datawinners.accountmanagement.models import NGOUserProfile
 from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
@@ -20,37 +17,30 @@ from mangrove.form_model.form_model import FormModel
 # noinspection PyUnresolvedReferences
 from datawinners.search import *
 
-class XlsFormToJson():
+class XlsFormParser():
 
-    def __init__(self, file_content_or_path, is_path_to_file=False, project_name='Project'):
-        if is_path_to_file:
-            survey = create_survey_from_path(file_content_or_path)
-            self.xform_as_string = survey.to_xml()
-            self.file_path = file_content_or_path
+    def __init__(self, path_or_file, project_name='Project'):
+        if isinstance(path_or_file, basestring):
+            self._file_object = None
+            path = path_or_file
         else:
-            f = NamedTemporaryFile(delete=True)
-            f.write(file_content_or_path)
-            f.seek(0)
-            workbook_dict = xls_to_dict(f)
-            json_dict = workbook_to_json(workbook_dict, form_name=project_name)
-            survey = create_survey_element_from_dict(json_dict)
-            self.xform_as_string = survey.to_xml()
+            self._file_object = path_or_file
+            path = path_or_file.name
+
+        self.xform_dict = parse_file_to_json(path, default_name=project_name, file_object=path_or_file)
+        survey = create_survey_element_from_dict(self.xform_dict)
+        self.xform = survey.to_xml()
 
     def parse(self):
-        return self.xform_as_string, XfromToJson(self.xform_as_string).parse()
-
-    def parse_new(self):
-        excel_reader = SurveyReader(self.file_path)
-        d = excel_reader.to_json_dict()
         questions = []
-        for c in d['children']:
+        for c in self.xform_dict['children']:
             if c['type'] == 'repeat':
                 questions.append(self._repeat(c))
-            elif c['type'] in ['text', 'int', 'date']:
+            elif c['type'] in ['text', 'integer', 'date']:
                 questions.append(self._field(c))
             elif c['type'] in ['select one', 'select all that apply']:
                 questions.append(self._select(c))
-        return self.xform_as_string, questions
+        return self.xform, questions
 
     def _repeat(self, repeat):
         group_label = repeat['label']
@@ -89,85 +79,14 @@ class XlsFormToJson():
             question.update({"type": "select1"})
         return question
 
-class XfromToJson():
-
-    def __init__(self, xform_as_string):
-        self.xform = xform_as_string
-
-    def parse(self):
-        return self._transform()
-
-    def _transform(self):
-        xform_dict = XFormToDict(self.xform).get_dict()
-        self.name_attrib_dict = {self.last_value(bind['nodeset']): bind for bind in xform_dict['html']['head']['model']['bind']}
-        questions = []
-
-        [f['nodeset'] for f in xform_dict['html']['head']['model']['bind'] if f['nodeset'].find]
-
-        groups = xform_dict['html']['body'].get('group')
-        if groups:
-            questions.extend(self.call_appropriate(groups,self.convert_group))
-        inputs = xform_dict['html']['body']['input']
-        questions.extend(self.call_appropriate(inputs, self.create_question))
-        return questions
-
-
-    def call_appropriate(self, param, call_fun, return_list=True):
-        if type(param) is list:
-            return [call_fun(o) for o in param]
-        else:
-            return [call_fun(param)] if return_list else call_fun(param)
-
-    def last_value(self, input):
-        return input.rsplit('/', 1)[-1]
-
-    def convert_group(self, group):
-        group_label = group['label']
-        if not group_label: #todo create appropriate error class
-            raise QuestionAlreadyExistsException('Unique group label is required')
-        group_name = self.last_value(group['ref'])
-        repeats = group['repeat']
-        questions = []
-        questions.extend(self.call_appropriate(repeats, self.convert_repeat, False))
-        #todo remove this duplication; note: required is Flase
-        q = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
-                 "code": group_name, "name": group_label, 'required': False,
-                 "instruction": "No answer required",
-                 'fields':questions}
-        return q
-
-    def _parse_field_set(self):
-        pass
-
-    def convert_repeat(self, repeat):
-        inputs = repeat['input']
-        return self.call_appropriate(inputs, self.create_question)
-
-    def create_question(self, input):
-        xform_dw_type_dict = {'string': 'text', 'int': 'integer', 'date': 'date'}
-        help_dict = {'string': 'word', 'int': 'number', 'date': 'date'}
-        name = input['label']
-        code = self.last_value(input['ref'])
-        type = self.name_attrib_dict[code]['type']
-        # todo entityquestion
-        # todo maintain the sequence of fields
-        q = {'title': name, 'type': xform_dw_type_dict[type], "is_entity_question": False,
-                 "code": code, "name": name, 'required': True,
-                 "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
-        if type == 'date':
-                q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
-                          "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
-
-        return q
-
 class MangroveService():
 
-    def __init__(self, xform_as_string, json_xform_data, project_name=None):
+    def __init__(self, xform_as_string, json_xform_data, questionnaire_code=None, project_name=None):
         self.user = User.objects.get(username="tester150411@gmail.com")
         self.manager = get_database_manager(self.user)
         self.entity_type = ['reporter']
-        self.questionnaire_code =  generate_questionnaire_code(self.manager)
-        self.name = 'Xlsform Project-' + self.questionnaire_code if not project_name else project_name + "-" + self.questionnaire_code
+        self.questionnaire_code =  questionnaire_code if questionnaire_code else generate_questionnaire_code(self.manager)
+        self.name = 'Xlsform Project-' + self.questionnaire_code if not project_name else project_name
         self.project_state = 'Test'
         self.language = 'en'
         self.xform = xform_as_string
@@ -175,18 +94,6 @@ class MangroveService():
         self.json_xform_data = json_xform_data
 
     def _create_questionnaire(self):
-
-        #todo make sure that xform field is added to FormModel
-        '''
-        @property
-        def xform(self):
-            return self._doc.xform
-
-        @xform.setter
-        def xform(self, value):
-            self._doc.xform = value
-        '''
-
         form_model = FormModel(self.manager, entity_type=self.entity_type, name=self.name, type='survey',
                                state=self.project_state, fields=[], form_code=self.questionnaire_code, language=self.language)
         QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(self.json_xform_data)

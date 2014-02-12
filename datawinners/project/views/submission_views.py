@@ -22,7 +22,7 @@ from datawinners import settings
 from datawinners.accountmanagement.decorators import is_datasender, session_not_expired, is_not_expired, valid_web_user
 
 from datawinners.accountmanagement.models import NGOUserProfile
-from datawinners.blue.xfom_bridge import XFormSubmissionProcessor
+from datawinners.blue.xform_bridge import XFormSubmissionProcessor
 from datawinners.feeds.database import get_feeds_database
 from datawinners.feeds.mail_client import mail_feed_errors
 from datawinners.main.database import get_database_manager

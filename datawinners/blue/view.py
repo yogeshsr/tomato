@@ -6,14 +6,11 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_view_exempt, csrf_response_exempt
 from django.views.generic.base import View
-from pyxform import create_survey_from_path, create_survey_from_xls, create_survey_element_from_dict
-from pyxform.xls2json import SurveyReader, workbook_to_json
-from pyxform.xls2json_backends import xls_to_dict
-import xlrd
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired
-from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson
-from datawinners.entity.import_data import get_filename_and_contents
+from datawinners.blue.xform_bridge import MangroveService, XlsFormParser
+from datawinners.main.database import get_database_manager
+from datawinners.project.helper import generate_questionnaire_code
 
 
 class ProjectUpload(View):
@@ -29,14 +26,19 @@ class ProjectUpload(View):
     def post(self, request):
 
         file_name = request.GET.get('qqfile').split('.')[0]
-        file = request.raw_post_data
+        file_content = request.raw_post_data
+        tmp_file = NamedTemporaryFile(delete=True, suffix=".xls")
+        tmp_file.write(file_content)
+        tmp_file.seek(0)
 
-        xform_as_string, json_xform_data = XlsFormToJson(file, project_name=file_name).parse()
+        manager = get_database_manager(request.user)
+        questionnaire_code =  generate_questionnaire_code(manager)
+        project_name = file_name + '-' + questionnaire_code
 
-        # mangrove code
-        mangroveService = MangroveService(xform_as_string, json_xform_data, project_name=file_name)
+        xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=project_name).parse()
+
+        mangroveService = MangroveService(xform_as_string, json_xform_data, questionnaire_code=questionnaire_code, project_name=project_name)
         id, name = mangroveService.create_project()
-
 
         return HttpResponse(
             json.dumps(

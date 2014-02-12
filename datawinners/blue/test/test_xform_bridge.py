@@ -5,13 +5,14 @@ from xml.etree import ElementTree as ET
 from django.contrib.auth.models import User
 
 from django.test import Client
+from mock import Mock
 
-from datawinners.blue.xfom_bridge import XfromToJson, MangroveService, XlsFormToJson, XFormSubmissionProcessor
+from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormSubmissionProcessor
 from datawinners.main.database import get_database_manager
+from mangrove.datastore.database import DatabaseManager
 from mangrove.datastore.datadict import DataDictType
 from mangrove.form_model.field import FieldSet, TextField
 from mangrove.form_model.form_model import get_form_model_by_code
-from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
 DIR = os.path.dirname(__file__)
 
@@ -19,35 +20,26 @@ class TestXFormBridge(unittest.TestCase):
 
     def setUp(self):
         self.test_data = os.path.join(DIR, 'testdata')
+        self.ALL_FIELDS = os.path.join(self.test_data,'all_fields.xls')
         self.SIMPLE = os.path.join(self.test_data,'text_and_integer.xls')
         self.REPEAT = os.path.join(self.test_data,'repeat.xls')
         self.SKIP = os.path.join(self.test_data,'skip-sample.xls')
         self.MULTI_SELECT = os.path.join(self.test_data,'multi-select.xls')
         self.MANY_FIELD = os.path.join(self.test_data,'many-fields.xls')
-        self.xform_with_default_namespace = os.path.join(self.test_data,'xpath-sample.xml')
+        self.NAME_SPACE = os.path.join(self.test_data,'xpath-sample.xml')
 
     def test_should_create_project_using_xlsform_file(self):
 
-        xform_as_string, json_xform_data = XlsFormToJson(self.REPEAT, is_path_to_file=True).parse()
+        xform, json_xform_data = XlsFormParser(self.REPEAT).parse()
 
-        mangroveService = MangroveService(xform_as_string, json_xform_data)
+        mangroveService = MangroveService(xform, json_xform_data)
         id, name = mangroveService.create_project()
 
         self.assertIsNotNone(id)
         self.assertIsNotNone(name)
 
-    def test_project_created_using_xform_string(self):
-        xform_as_string = open(self.xform_with_default_namespace, 'r').read()
-        json_xform_data = XfromToJson(xform_as_string).parse()
-
-        # mangrove code
-        id, name = MangroveService(xform_as_string, json_xform_data).create_project()
-
-        self.assertIsNotNone(id)
-        self.assertIsNotNone(name)
-
-    def test_should_convert_skip(self):
-        xform_as_string, json_xform_data = XlsFormToJson(self.SKIP, is_path_to_file=True).parse_new()
+    def test_should_convert_skip_logic_question(self):
+        xform_as_string, json_xform_data = XlsFormParser(self.SKIP, is_path_to_file=True).parse()
         mangroveService = MangroveService(xform_as_string, json_xform_data)
         id, name = mangroveService.create_project()
 
@@ -55,24 +47,39 @@ class TestXFormBridge(unittest.TestCase):
         self.assertIsNotNone(name)
 
     def test_should_convert_multi_select_question(self):
-        xform_as_string, json_xform_data = XlsFormToJson(self.MULTI_SELECT, is_path_to_file=True).parse_new()
+        xform_as_string, json_xform_data = XlsFormParser(self.MULTI_SELECT, is_path_to_file=True).parse()
         mangroveService = MangroveService(xform_as_string, json_xform_data)
         id, name = mangroveService.create_project()
 
         self.assertIsNotNone(id)
         self.assertIsNotNone(name)
 
-    def test_xlsform_conversion_to_xform_and_json(self):
-        parser = XlsFormToJson(self.REPEAT, True)
+    def test_all_fields_types_in_xlsform_is_converted_to_json(self):
+        xform, json_xform_data = XlsFormParser(self.ALL_FIELDS).parse()
 
-        xform, json_xform_data = parser.parse_new()
+        expected_json = \
+            [{'code': 'name', 'name': 'What is your name?', 'title': 'What is your name?', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+             {'code': 'education', 'instruction': 'No answer required', 'name': 'Education', 'title': 'Education',
+                'fields': [{'code': 'degree', 'name': 'Degree name', 'title': 'Degree name', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+                         {'code': 'completed_on', 'date_format': 'dd.mm.yyyy', 'name': 'Degree completion year', 'title': 'Degree completion year', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a date in the following format: day.month.year. Example: 25.12.2011','event_time_field_flag': False, 'type': 'date'}], 'is_entity_question': False,
+              'type': 'field_set', 'required': False},
+             {'code': 'age', 'name': 'What is your age?', 'title': 'What is your age?', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a number', 'type': 'integer'},
+             {'code': 'fav_color', 'title': 'Which colors you like?', 'required': True,
+                'choices': [{'text': 'Red', 'val': 'r'}, {'text': 'Blue', 'val': 'b'},
+                          {'text': 'Green', 'val': 'g'}], 'is_entity_question': False, 'type': 'select'},
+             {'code': 'pizza_fan', 'title': 'Do you like pizza?', 'required': True,
+                'choices': [{'text': 'Yes', 'val': 'y'}, {'text': 'No', 'val': 'n'}], 'is_entity_question': False, 'type': 'select1'},
+             {'code': 'other', 'name': 'What else you like?', 'title': 'What else you like?', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+             {'code': 'pizza_type', 'name': 'Which pizza type you like?', 'title': 'Which pizza type you like?', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'}]
 
-        self.assertIsNotNone(json_xform_data)
+        #expected_xml = '<?xml version="1.0"?> <h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> <h:head> <h:title>Project</h:title> <model> <instance> <Project id="Project"> <name/> <education jr:template=""> <degree/> <completed_on/> </education> <age/> <fav_color/> <pizza_fan/> <other/> <pizza_type/> <meta> <instanceID/> </meta> </Project> </instance> <bind nodeset="/Project/name" type="string"/> <bind nodeset="/Project/education/degree" type="string"/> <bind nodeset="/Project/education/completed_on" type="date"/> <bind nodeset="/Project/age" type="int"/> <bind nodeset="/Project/fav_color" type="select"/> <bind nodeset="/Project/pizza_fan" type="select1"/> <bind nodeset="/Project/other" relevant=" /Project/pizza_fan  = 'n'" type="string"/> <bind nodeset="/Project/pizza_type" relevant=" /Project/pizza_fan  = 'y'" type="string"/> <bind calculate="concat('uuid:', uuid())" nodeset="/Project/meta/instanceID" readonly="true()" type="string"/> </model> </h:head> <h:body> <input ref="/Project/name"> <label>What is your name?</label> </input> <group ref="/Project/education"> <label>Education</label> <repeat nodeset="/Project/education"> <input ref="/Project/education/degree"> <label>Degree name</label> </input> <input ref="/Project/education/completed_on"> <label>Degree completion year</label> </input> </repeat> </group> <input ref="/Project/age"> <label>What is your age?</label> </input> <select ref="/Project/fav_color"> <label>Which colors you like?</label> <item> <label>Red</label> <value>r</value> </item> <item> <label>Blue</label> <value>b</value> </item> <item> <label>Green</label> <value>g</value> </item> </select> <select1 ref="/Project/pizza_fan"> <label>Do you like pizza?</label> <item> <label>Yes</label> <value>y</value> </item> <item> <label>No</label> <value>n</value> </item> </select1> <input ref="/Project/other"> <label>What else you like?</label> </input> <input ref="/Project/pizza_type"> <label>Which pizza type you like?</label> </input> </h:body> </h:html>'
+
+        self.assertEqual(expected_json, json_xform_data)
         self.assertIsNotNone(xform)
 
     def test_sequence_of_the_fields_in_form_model_should_be_same_as_in_xlsform(self):
 
-        xform_as_string, json_xform_data = XlsFormToJson(self.MANY_FIELD, is_path_to_file=True).parse()
+        xform_as_string, json_xform_data = XlsFormParser(self.MANY_FIELD).parse()
 
         self.assertIsNotNone(xform_as_string)
         names = [f['code'] for f in json_xform_data]
@@ -88,9 +95,9 @@ class TestXFormBridge(unittest.TestCase):
         return r
 
     def test_sequence_of_the_mixed_type_fields_in_from_model_should_be_same_as_xlsform(self):
-        parser = XlsFormToJson(self.REPEAT, True)
+        parser = XlsFormParser(self.REPEAT)
 
-        xform, json_xform_data = parser.parse_new()
+        xform, json_xform_data = parser.parse()
 
         names = [f['code'] if f['type'] != 'field_set' else self._repeat_codes(f) for f in json_xform_data]
         expected_names = ['familyname',
@@ -101,7 +108,7 @@ class TestXFormBridge(unittest.TestCase):
 
     def test_xform_is_the_default_namespace(self):
         # while parsing submission we assume that xform element without namespace since being default.
-        xform_as_string = open(self.xform_with_default_namespace, 'r').read()
+        xform_as_string = open(self.NAME_SPACE, 'r').read()
         default_namespace_definition_format = 'xmlns="http://www.w3.org/2002/xforms"'
 
         updated_xform = MangroveService(xform_as_string, None)._add_from_code(xform_as_string, None)
@@ -133,7 +140,7 @@ class TestXFormBridge(unittest.TestCase):
         self.assertEqual(form_code, expected_form_code)
 
     def test_should_verify_xform_is_stored_when_project_created(self):
-        xform_as_string, json_xform_data = XlsFormToJson(self.REPEAT, is_path_to_file=True).parse()
+        xform_as_string, json_xform_data = XlsFormParser(self.REPEAT).parse()
 
         mangroveService = MangroveService(xform_as_string, json_xform_data)
         mangroveService.create_project()
@@ -144,7 +151,7 @@ class TestXFormBridge(unittest.TestCase):
         self.assertIsNotNone(from_model.xform)
 
     def test_should_verify_repeat_field_added_to_questionnaire(self):
-        xform_as_string, json_xform_data = XlsFormToJson(self.REPEAT, is_path_to_file=True).parse()
+        xform_as_string, json_xform_data = XlsFormParser(self.REPEAT).parse()
         mangroveService = MangroveService(xform_as_string, json_xform_data)
         mangroveService.create_project()
 
@@ -185,9 +192,7 @@ class TestXFormBridge(unittest.TestCase):
         self.assertNotEqual(r._container[0].find('project_name'), -1)
 
     def create_test_fields_and_survey(self):
-        request_user = User.objects.get(username='tester150411@gmail.com')
-        manager = get_database_manager(request_user)
-        default_ddtype = DataDictType(manager, name='default dd type', slug='string_default',
+        default_ddtype = DataDictType(Mock(spec=DatabaseManager), name='default dd type', slug='string_default',
                                       primitive_type='string')
         #change this to reporter
         #entity_field = TextField('clinic', 'ID', 'clinic label', default_ddtype, entity_question_flag=True)
@@ -205,7 +210,7 @@ class TestXFormBridge(unittest.TestCase):
     def test_should_create_xform_instance_for_submission(self):
         form_fields, survey_response_values = self.create_test_fields_and_survey()
         submissionProcessor = XFormSubmissionProcessor()
-        expected_xml = '<instance><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
+        expected_xml = '<instance xmlns="http://www.w3.org/2002/xforms"><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
 
         instance_node_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
 
