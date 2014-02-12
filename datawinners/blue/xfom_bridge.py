@@ -48,8 +48,8 @@ class XlsFormToJson():
                 questions.append(self._repeat(c))
             elif c['type'] in ['text', 'int', 'date']:
                 questions.append(self._field(c))
-            elif c['type'] == 'select one':
-                questions.append(self._select1(c))
+            elif c['type'] in ['select one', 'select all that apply']:
+                questions.append(self._select(c))
         return self.xform_as_string, questions
 
     def _repeat(self, repeat):
@@ -80,13 +80,14 @@ class XlsFormToJson():
                           "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
         return q
 
-    def _select1(self, field):
+    def _select(self, field):
         name = field['label']
         code = field['name']
-
-        q = {"title": name, "type": "select1", "code": code, 'required': True,
+        question = {"title": name, "code": code, "type": "select", 'required': True,
                  "choices": [{'text':f['label'], 'val':f['name']} for f in field['choices']], "is_entity_question": False}
-        return q
+        if field['type'] == 'select one':
+            question.update({"type": "select1"})
+        return question
 
 class XfromToJson():
 
