@@ -21,6 +21,7 @@ class TestXFormBridge(unittest.TestCase):
         self.test_data = os.path.join(DIR, 'testdata')
         self.SIMPLE = os.path.join(self.test_data,'text_and_integer.xls')
         self.REPEAT = os.path.join(self.test_data,'repeat.xls')
+        self.SKIP = os.path.join(self.test_data,'skip-sample.xls')
         self.MANY_FIELD = os.path.join(self.test_data,'many-fields.xls')
         self.xform_with_default_namespace = os.path.join(self.test_data,'xpath-sample.xml')
 
@@ -40,6 +41,14 @@ class TestXFormBridge(unittest.TestCase):
 
         # mangrove code
         id, name = MangroveService(xform_as_string, json_xform_data).create_project()
+
+        self.assertIsNotNone(id)
+        self.assertIsNotNone(name)
+
+    def test_should_convert_skip(self):
+        xform_as_string, json_xform_data = XlsFormToJson(self.SKIP, is_path_to_file=True).parse_new()
+        mangroveService = MangroveService(xform_as_string, json_xform_data)
+        id, name = mangroveService.create_project()
 
         self.assertIsNotNone(id)
         self.assertIsNotNone(name)
