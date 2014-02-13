@@ -11,7 +11,7 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.field import FieldSet
+from mangrove.form_model.field import FieldSet, GeoCodeField, DateField
 from mangrove.form_model.form_model import FormModel
 
 # noinspection PyUnresolvedReferences
@@ -36,10 +36,11 @@ class XlsFormParser():
         for c in self.xform_dict['children']:
             if c['type'] == 'repeat':
                 questions.append(self._repeat(c))
-            elif c['type'] in ['text', 'integer', 'date']:
+            elif c['type'] in ['text', 'integer', 'date', 'geopoint']:
                 questions.append(self._field(c))
             elif c['type'] in ['select one', 'select all that apply']:
                 questions.append(self._select(c))
+
         return self.xform, questions
 
     def _repeat(self, repeat):
@@ -57,8 +58,8 @@ class XlsFormParser():
         return q
 
     def _field(self, field):
-        xform_dw_type_dict = {'text': 'text', 'int': 'integer', 'date': 'date'}
-        help_dict = {'text': 'word', 'int': 'number', 'date': 'date'}
+        xform_dw_type_dict = {'text': 'text', 'integer': 'integer', 'date': 'date', 'geopoint': 'geocode'}
+        help_dict = {'text': 'word', 'int': 'number', 'date': 'date', 'geopoint': 'geopoint'}
         name = field['label']
         code = field['name']
         type = field['type']
@@ -153,6 +154,10 @@ class XFormSubmissionProcessor():
                     dict.update(self.get_dict(f, v[f.code]))
                 dicts.append(dict)
             return {field.code: dicts}
+        elif type(field) is DateField:
+            return {field.code: value.replace('.', '-')}
+        elif type(field) is GeoCodeField:
+            return {field.code: value.replace(',', ' ')}
         else:
             return {field.code: value}
 

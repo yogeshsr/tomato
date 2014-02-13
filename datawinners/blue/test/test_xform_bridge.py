@@ -2,13 +2,11 @@ from __builtin__ import type
 import os
 import unittest
 from xml.etree import ElementTree as ET
-from django.contrib.auth.models import User
 
 from django.test import Client
 from mock import Mock
 
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormSubmissionProcessor
-from datawinners.main.database import get_database_manager
 from mangrove.datastore.database import DatabaseManager
 from mangrove.datastore.datadict import DataDictType
 from mangrove.form_model.field import FieldSet, TextField
@@ -30,7 +28,7 @@ class TestXFormBridge(unittest.TestCase):
 
     def test_should_create_project_using_xlsform_file(self):
 
-        xform, json_xform_data = XlsFormParser(self.REPEAT).parse()
+        xform, json_xform_data = XlsFormParser(self.ALL_FIELDS).parse()
 
         mangroveService = MangroveService(xform, json_xform_data)
         id, name = mangroveService.create_project()
