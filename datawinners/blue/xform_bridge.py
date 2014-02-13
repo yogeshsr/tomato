@@ -59,7 +59,7 @@ class XlsFormParser():
 
     def _field(self, field):
         xform_dw_type_dict = {'text': 'text', 'integer': 'integer', 'date': 'date', 'geopoint': 'geocode'}
-        help_dict = {'text': 'word', 'int': 'number', 'date': 'date', 'geopoint': 'geopoint'}
+        help_dict = {'text': 'word', 'integer': 'number', 'date': 'date', 'geopoint': 'geopoint'}
         name = field['label']
         code = field['name']
         type = field['type']
