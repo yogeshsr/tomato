@@ -63,8 +63,9 @@ class XlsFormParser():
         name = field['label']
         code = field['name']
         type = field['type']
+
         q = {'title': name, 'type': xform_dw_type_dict[type], "is_entity_question": False,
-                 "code": code, "name": name, 'required': True,
+                 "code": code, "name": name, 'required': self.is_required(field),
                  "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
         if type == 'date':
                 q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
@@ -74,11 +75,16 @@ class XlsFormParser():
     def _select(self, field):
         name = field['label']
         code = field['name']
-        question = {"title": name, "code": code, "type": "select", 'required': True,
+        question = {"title": name, "code": code, "type": "select", 'required': self.is_required(field),
                  "choices": [{'text':f['label'], 'val':f['name']} for f in field['choices']], "is_entity_question": False}
         if field['type'] == 'select one':
             question.update({"type": "select1"})
         return question
+
+    def is_required(self, field):
+        if field.get('bind') and 'yes' == str(field['bind'].get('required')).lower():
+            return True
+        return False
 
 class MangroveService():
 
