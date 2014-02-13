@@ -42,11 +42,11 @@ def create_question_from(dictionary, dbm):
     elif type == field_attributes.SHORT_CODE_FIELD:
         return _get_short_code_field(code, dictionary, is_entity_question, label, name, instruction, required)
     elif type == field_attributes.FIELD_SET:
-        return _get_field_set_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required,
+        return _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required,
                                     dbm)
     return None
 
-def _get_field_set_field(code, ddtype, dictionary, is_entity_question, label, name, instruction, required, dbm):
+def _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required, dbm):
     constraints, constraints_json = [], dictionary.get("constraints")
     if constraints_json is not None:
         constraints = constraints_factory(constraints_json)
@@ -54,7 +54,7 @@ def _get_field_set_field(code, ddtype, dictionary, is_entity_question, label, na
     sub_fields = dictionary.get("fields")
     repeat_question_fields = [create_question_from(f, dbm) for f in sub_fields]
     field = FieldSet(name=name, code=code, label=label, entity_question_flag=is_entity_question,
-                      constraints=constraints, ddtype=ddtype, instruction=instruction, required=required,
+                      constraints=constraints, instruction=instruction, required=required,
                       field_set=repeat_question_fields)
     return field
 
@@ -466,10 +466,10 @@ class ShortCodeField(TextField):
         return super(ShortCodeField, self).validate(value)
 
 class FieldSet(Field):
-    def __init__(self, name, code, label, ddtype, constraints=None, defaultValue="", instruction=None,
+    def __init__(self, name, code, label, constraints=None, defaultValue="", instruction=None,
                  entity_question_flag=False, required=True, field_set=[]):
         Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
-                       label=label, ddtype=ddtype, instruction=instruction, required=required)
+                       label=label, instruction=instruction, required=required)
         self.fields = self._dict['fields'] = field_set
 
     def is_field_set(self):
@@ -491,7 +491,6 @@ class FieldSet(Field):
     def _to_json(self):
         dict = self._dict.copy()
         dict['instruction'] = self._dict['instruction']
-        dict['ddtype'] = dict['ddtype'].to_json()
         dict['fields'] = [f._to_json() for f in self.fields]
         return dict
 
