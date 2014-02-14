@@ -2,6 +2,9 @@ import os
 import tempfile
 import unittest
 from django_digest.test import Client as DigestClient
+from datawinners.blue.xform_bridge import XFormSubmissionProcessor
+from mangrove.form_model.field import TextField, FieldSet, DateField, IntegerField, SelectField, GeoCodeField
+from xml.etree import ElementTree as ET
 
 DIR = os.path.dirname(__file__)
 
@@ -11,6 +14,8 @@ class TestXFromClientSubmission(unittest.TestCase):
         self.client = DigestClient()
         self.client.set_authorization('tester150411@gmail.com','tester150411', 'Digest')
         self.test_data = os.path.join(DIR, 'testdata')
+        self.XFORM_XML = os.path.join(self.test_data,'xform-024.xml')
+        self.XFORM_XML_ALL_FIELDS = os.path.join(self.test_data,'xform_all_fields.xml')
 
     #todo Test data is hardcoded currently. Need to fix this ex by creating required project.
 
@@ -52,3 +57,87 @@ class TestXFromClientSubmission(unittest.TestCase):
         self.assertIsNotNone(submission_id)
 
         # todo fetch submission doc and verify; append something unique to submission to make it specific
+
+    def test_should_update_xform_instance_with_submission_data(self):
+        xform_024 = open(self.XFORM_XML, 'r').read()
+        form_fields, survey_response_values = self.create_test_fields_and_survey()
+        submissionProcessor = XFormSubmissionProcessor()
+        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+
+        xform_with_submission = submissionProcessor.update_instance_children(xform_024, xform_instance_xml)
+
+        #todo asset submission in xml
+        print xform_with_submission
+
+    def create_code_value(self, node):
+        if node.getchildren():
+            return {node.tag.split('}')[1]: [self.create_code_value(c) for c in node.getchildren()]}
+        else:
+            return {node.tag.split('}')[1]: node.text if node.text else ''}
+
+    def test_should_update_xform_instance_with_submission_data_for_all_field_types(self):
+        xform = open(self.XFORM_XML_ALL_FIELDS, 'r').read()
+        form_fields, survey_response_values = self.create_test_fields_and_survey_for_all_fields_type()
+        submissionProcessor = XFormSubmissionProcessor()
+        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+
+        xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
+
+        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
+        root = ET.fromstring(xform_with_submission)
+
+        children = [e for e in root.getiterator() if e.tag == '{http://www.w3.org/2002/xforms}Project'][0].getchildren()
+        code_value_dict = [self.create_code_value(child) for child in children]
+
+        expected_code_val_dict = [{'meta': [{'instanceID': ''}]}, {'form_code': '023'},
+                                  {'other': 'Samosa'},
+                                  {'name': 'Santa'}, {'location': '4.9158 11.9531'}, {'pizza_type': 'null'},
+                                  {'age': '30'},
+                                  {'education': [{'completed_on': '2014-02-10'}, {'degree': 'SantaSSC'}]},
+                                  {'fav_color': 'a b'}, {'pizza_fan': 'b'}]
+
+        self.assertEqual(expected_code_val_dict, code_value_dict)
+
+    def create_test_fields_and_survey_for_all_fields_type(self):
+        name = TextField('name', 'name' ,'What is your name?')
+        degree = TextField('degree', 'degree' ,'Degree name')
+        completed_on = DateField('completed_on', 'completed_on','Degree completion year', 'dd.mm.yyyy')
+        education = FieldSet('education', 'education', 'Education', field_set=[degree,completed_on])
+        age = IntegerField('age', 'age' ,'What is your age?')
+        opt_fav_col = [('a','Red'), ('b','Blue'),('c','Green')]
+        fav_col = SelectField('fav_color', 'fav_color', 'Which colors you like?', opt_fav_col)
+        opt_pizza_col = [('a', 'Yes'),('b','No')]
+        pizza_fan = SelectField('pizza_fan', 'pizza_fan', 'Do you like pizza?', opt_pizza_col)
+        other = TextField('other', 'other' ,'What else you like?')
+        pizza_type = TextField('pizza_type', 'pizza_type' ,'Which pizza type you like?')
+        location = GeoCodeField('location', 'location' ,'Your location?')
+
+        form_fields = [name, education, age, fav_col, pizza_fan, other, pizza_type, location]
+
+        # todo how required will be handled
+        survey_response_values = {'name': 'Santa', 'pizza_type': None, 'age': '30', 'other': 'Samosa', 'location': '4.9158,11.9531', 'education': [{'completed_on': u'10.02.2014', 'degree': 'SantaSSC'}], 'pizza_fan': 'b', 'fav_color': 'ab'}
+        return form_fields, survey_response_values
+
+
+    def create_test_fields_and_survey(self):
+        #change this to reporter
+        #entity_field = TextField('clinic', 'ID', 'clinic label', entity_question_flag=True)
+        city_field = TextField('city', 'city', 'What is the City name?')
+        name_field = TextField('centername', 'centername', 'Center Name?')
+        area_field = TextField('area', 'area', 'Area?')
+        center_field_set = FieldSet('center', 'center', 'Center Information', field_set=[name_field, area_field])
+        form_fields = [#entity_field,
+                       city_field, center_field_set]
+        survey_response_values = {'city': 'Bhopal',
+                                  'center': [{'centername': 'Boot', 'area': 'New Market'},
+                                             {'centername': 'Weene', 'area': 'Bgh'}], 'eid': 'rep276'}
+        return form_fields, survey_response_values
+
+    def test_should_create_xform_instance_for_submission(self):
+        form_fields, survey_response_values = self.create_test_fields_and_survey()
+        submissionProcessor = XFormSubmissionProcessor()
+        expected_xml = '<instance xmlns="http://www.w3.org/2002/xforms"><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
+
+        instance_node_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+
+        self.assertEqual(expected_xml, instance_node_xml)

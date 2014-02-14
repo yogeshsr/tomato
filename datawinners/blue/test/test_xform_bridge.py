@@ -188,41 +188,6 @@ class TestXFormBridge(unittest.TestCase):
         self.assertEquals(r.status_code, 200)
         self.assertNotEqual(r._container[0].find('project_name'), -1)
 
-    def create_test_fields_and_survey(self):
-        #change this to reporter
-        #entity_field = TextField('clinic', 'ID', 'clinic label', entity_question_flag=True)
-        city_field = TextField('city', 'city', 'What is the City name?')
-        name_field = TextField('centername', 'centername', 'Center Name?')
-        area_field = TextField('area', 'area', 'Area?')
-        center_field_set = FieldSet('center', 'center', 'Center Information', field_set=[name_field, area_field])
-        form_fields = [#entity_field,
-                       city_field, center_field_set]
-        survey_response_values = {'city': 'Bhopal',
-                                  'center': [{'centername': 'Boot', 'area': 'New Market'},
-                                             {'centername': 'Weene', 'area': 'Bgh'}], 'eid': 'rep276'}
-        return form_fields, survey_response_values
-
-    def test_should_create_xform_instance_for_submission(self):
-        form_fields, survey_response_values = self.create_test_fields_and_survey()
-        submissionProcessor = XFormSubmissionProcessor()
-        expected_xml = '<instance xmlns="http://www.w3.org/2002/xforms"><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
-
-        instance_node_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
-
-        self.assertEqual(expected_xml, instance_node_xml)
-
-    def test_should_update_xform_instance_with_submission_data(self):
-        xform_024 = open('testdata/xform-024.xml', 'r').read()
-        form_fields, survey_response_values = self.create_test_fields_and_survey()
-        submissionProcessor = XFormSubmissionProcessor()
-        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
-
-        xform_with_submission = submissionProcessor.update_instance_children(xform_024, xform_instance_xml)
-
-        #todo asset submission in xml
-        print xform_with_submission
-
-
     # def test_a(self):
     #     f = open('testdata/contacts.csv','r').read(1024)
     #     print f
