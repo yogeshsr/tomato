@@ -11,7 +11,7 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.field import FieldSet, GeoCodeField, DateField
+from mangrove.form_model.field import FieldSet, GeoCodeField, DateField, SelectField
 from mangrove.form_model.form_model import FormModel
 
 # noinspection PyUnresolvedReferences
@@ -161,9 +161,11 @@ class XFormSubmissionProcessor():
                 dicts.append(dict)
             return {field.code: dicts}
         elif type(field) is DateField:
-            return {field.code: value.replace('.', '-')}
+            return {field.code: '-'.join(value.split('.')[::-1])}
         elif type(field) is GeoCodeField:
             return {field.code: value.replace(',', ' ')}
+        elif type(field) is SelectField:
+            return {field.code: ' '.join([ch for ch in value])}
         else:
             return {field.code: value}
 
