@@ -96,6 +96,7 @@ class MangroveService():
         self.name = 'Xlsform Project-' + self.questionnaire_code if not project_name else project_name
         self.project_state = 'Test'
         self.language = 'en'
+        # todo delete this var; make it inline
         self.xform = xform_as_string
         self.xform_with_form_code = self._add_from_code(xform_as_string, self.questionnaire_code)
         self.json_xform_data = json_xform_data
@@ -165,7 +166,7 @@ class XFormSubmissionProcessor():
         elif type(field) is GeoCodeField:
             return {field.code: value.replace(',', ' ')}
         elif type(field) is SelectField:
-            return {field.code: ' '.join([ch for ch in value])}
+            return {field.code: ''.join([ch for ch in value])}
         else:
             return {field.code: value}
 

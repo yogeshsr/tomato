@@ -48,7 +48,7 @@ def hide_entity_question(fields):
 def get_according_value(value_dict, question):
     value = value_dict.get(question.code.lower(), '--')
     if value != '--' and question.type in ['select1', 'select']:
-        value_list = question.get_option_value_list(value)
+        value_list = question.get_option_text_list(value)
         return ", ".join(value_list)
     return value
 

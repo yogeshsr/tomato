@@ -97,7 +97,7 @@ class TestXFromClientSubmission(unittest.TestCase):
                                   {'name': 'Santa'}, {'location': '4.9158 11.9531'}, {'pizza_type': 'null'},
                                   {'age': '30'},
                                   {'education': [{'completed_on': '2014-02-10'}, {'degree': 'SantaSSC'}]},
-                                  {'fav_color': 'a b'}, {'pizza_fan': 'b'}]
+                                  {'fav_color': 'red blue'}, {'pizza_fan': 'no'}]
 
         self.assertEqual(expected_code_val_dict, code_value_dict)
 
@@ -107,9 +107,9 @@ class TestXFromClientSubmission(unittest.TestCase):
         completed_on = DateField('completed_on', 'completed_on','Degree completion year', 'dd.mm.yyyy')
         education = FieldSet('education', 'education', 'Education', field_set=[degree,completed_on])
         age = IntegerField('age', 'age' ,'What is your age?')
-        opt_fav_col = [('a','Red'), ('b','Blue'),('c','Green')]
+        opt_fav_col = [('red','Red'), ('blue','Blue'),('c','Green')]
         fav_col = SelectField('fav_color', 'fav_color', 'Which colors you like?', opt_fav_col)
-        opt_pizza_col = [('a', 'Yes'),('b','No')]
+        opt_pizza_col = [('yes', 'Yes'),('no','No')]
         pizza_fan = SelectField('pizza_fan', 'pizza_fan', 'Do you like pizza?', opt_pizza_col)
         other = TextField('other', 'other' ,'What else you like?')
         pizza_type = TextField('pizza_type', 'pizza_type' ,'Which pizza type you like?')
@@ -118,7 +118,7 @@ class TestXFromClientSubmission(unittest.TestCase):
         form_fields = [name, education, age, fav_col, pizza_fan, other, pizza_type, location]
 
         # todo how required will be handled
-        survey_response_values = {'name': 'Santa', 'pizza_type': None, 'age': '30', 'other': 'Samosa', 'location': '4.9158,11.9531', 'education': [{'completed_on': u'10.02.2014', 'degree': 'SantaSSC'}], 'pizza_fan': 'b', 'fav_color': 'ab'}
+        survey_response_values = {'name': 'Santa', 'pizza_type': None, 'age': '30', 'other': 'Samosa', 'location': '4.9158,11.9531', 'education': [{'completed_on': u'10.02.2014', 'degree': 'SantaSSC'}], 'pizza_fan': 'no', 'fav_color': 'red blue'}
         return form_fields, survey_response_values
 
 

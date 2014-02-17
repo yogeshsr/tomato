@@ -240,15 +240,15 @@ def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model)
         elif field.type == "select":
             field = _update_select_field_by_revision(field, form_model, submission_doc)
             if field.type == "select":
-                entry = field.get_option_value_list(entry)
+                entry = field.get_option_text_list(entry)
             elif field.type == "select1":
-                entry = ",".join(field.get_option_value_list(entry))
+                entry = ",".join(field.get_option_text_list(entry))
         elif field.type == "select1":
             field = _update_select_field_by_revision(field, form_model, submission_doc)
             if field.type == "select":
-                entry = field.get_option_value_list(entry)
+                entry = field.get_option_text_list(entry)
             elif field.type == "select1":
-                entry = ",".join(field.get_option_value_list(entry))
+                entry = ",".join(field.get_option_text_list(entry))
         elif field.type == "date":
             try:
                 if form_model.revision != submission_doc.form_model_revision:
