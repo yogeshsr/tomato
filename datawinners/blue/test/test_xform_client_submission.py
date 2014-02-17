@@ -75,6 +75,14 @@ class TestXFromClientSubmission(unittest.TestCase):
         else:
             return {node.tag.split('}')[1]: node.text if node.text else ''}
 
+    def get_submission_from_xform(self, xform_with_submission):
+        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
+        root = ET.fromstring(xform_with_submission)
+        #todo remove the project name hardcoding; instead find the project name from xform title.
+        children = [e for e in root.getiterator() if e.tag == '{http://www.w3.org/2002/xforms}Project'][0].getchildren()
+        code_value_dict = [self.create_code_value(child) for child in children]
+        return code_value_dict
+
     def test_should_update_xform_instance_with_submission_data_for_all_field_types(self):
         xform = open(self.XFORM_XML_ALL_FIELDS, 'r').read()
         form_fields, survey_response_values = self.create_test_fields_and_survey_for_all_fields_type()
@@ -83,12 +91,7 @@ class TestXFromClientSubmission(unittest.TestCase):
 
         xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
 
-        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
-        root = ET.fromstring(xform_with_submission)
-
-        children = [e for e in root.getiterator() if e.tag == '{http://www.w3.org/2002/xforms}Project'][0].getchildren()
-        code_value_dict = [self.create_code_value(child) for child in children]
-
+        code_value_dict = self.get_submission_from_xform(xform_with_submission)
         expected_code_val_dict = [{'meta': [{'instanceID': ''}]}, {'form_code': '023'},
                                   {'other': 'Samosa'},
                                   {'name': 'Santa'}, {'location': '4.9158 11.9531'}, {'pizza_type': 'null'},
