@@ -38,11 +38,12 @@ class SurveyResponseService(object):
 
         #TODO : validate_submission should use form_model's bound values
         form_model.bind(values)
-        if form_model.xform:
-            cleaned_data, errors = values, OrderedDict()
-            self.feeds_dbm = None
-        else:
-            cleaned_data, errors = form_model.validate_submission(values=values)
+        # if form_model.xform:
+        #     cleaned_data, errors = values, OrderedDict()
+        #     self.feeds_dbm = None
+        # else:
+        self.feeds_dbm = None
+        cleaned_data, errors = form_model.validate_submission(values=values)
 
         form_submission = DataFormSubmission(form_model, cleaned_data, errors)
         feed_create_errors = None
