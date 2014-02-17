@@ -120,7 +120,7 @@ class EnrichedSurveyResponseBuilder(object):
 
     def _select_field_values(self, choices, field):
         choice_array = field.get_option_list(choices)
-        value_array = field.get_option_value_list(choices)
+        value_array = field.get_option_text_list(choices)
         if len(choice_array) != len(value_array):
             error_message = 'Survey Response Id : %s, ' % self.survey_response.id
             error_message += 'field code %s, ' % field.code

@@ -171,9 +171,10 @@ class WebParser(object):
         return form_code, self._fetch_string_value(message)
 
     def _to_str(self, value):
-        if isinstance(value, (int, float, long)):
-            return str(value)
-        return "".join(value).strip() if value is not None else None
+        # select type field
+        if isinstance(value, list):
+            return " ".join(value)
+        return str(value).strip() if value else None
 
 
 class CsvParser(object):
@@ -355,8 +356,6 @@ class XFormParser(object):
 
     def _format_field(self, field, values):
         code = field.code
-        if type(field) == SelectField and field.single_select_flag == False:
-            values[code] = values[code].replace(' ', '')
         if type(field) == GeoCodeField:
             geo_code_list = values[code].split(' ')
             values[code] = '{0},{1}'.format(geo_code_list[0], geo_code_list[1])

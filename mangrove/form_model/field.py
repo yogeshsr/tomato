@@ -534,17 +534,19 @@ class SelectField(Field):
                 elif isinstance(option, dict):
                     single_language_specific_option = option
                 else:
-                    single_language_specific_option = {'text': option}
+                    #todo is this supported?
+                    single_language_specific_option = {'text': option, 'val': option}
                 valid_choices.append(single_language_specific_option)
+
         self.constraint = ChoiceConstraint(
-            list_of_valid_choices=[each.get('text') for each in valid_choices],
+            list_of_valid_choices=valid_choices,
             single_select_constraint=single_select_flag, code=code)
 
     SINGLE_SELECT_FLAG = 'single_select_flag'
 
     def validate(self, value):
         Field.validate(self, value)
-        return self.constraint.validate(answer=value.replace(' ', '')) #data from ODK collect is submitted with spaces
+        return self.constraint.validate(answer=value)
 
     @property
     def options(self):
@@ -570,7 +572,7 @@ class SelectField(Field):
                 return opt_text
         return None
 
-    def get_value_by_option(self, option):
+    def get_option_text(self, option):
         for opt in self.options:
             opt_text = opt['text']
             opt_value = opt['val']
@@ -579,18 +581,31 @@ class SelectField(Field):
         return None
 
 
-    def get_option_value_list(self, question_value):
+    def get_option_text_list(self, question_value):
         options = self.get_option_list(question_value)
         result = []
         for option in options:
-            option_value = self.get_value_by_option(option)
-            if option_value:
-                result.append(option_value)
+            option_text = self.get_option_text(option)
+            if option_text:
+                result.append(option_text)
         return result
 
     def get_option_list(self, question_value):
         if question_value is None: return []
-        return re.findall(r'[1-9]?[a-zA-Z]', question_value)
+
+        responses = []
+        if ',' in question_value:
+            responses = question_value.split(',')
+            responses = [r.strip() for r in responses]
+        elif ' ' in question_value:
+            responses = question_value.split(' ')
+        elif question_value in [item.get('val') for item in self._dict[self.OPTIONS]]:
+            # yes in ['yes','no']
+            responses = [question_value]
+        else:
+            responses = re.findall(r'[1-9]?[a-zA-Z]', question_value)
+
+        return responses
 
 
     def formatted_field_values_for_excel(self, value):
@@ -599,7 +614,7 @@ class SelectField(Field):
         options = re.findall(r'[1-9]?[a-zA-Z]', value)
         result = []
         for option in options:
-            option_value = self.get_value_by_option(option)
+            option_value = self.get_option_text(option)
             if option_value:
                 result.append(option_value)
         return result
