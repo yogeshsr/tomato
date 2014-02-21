@@ -185,6 +185,14 @@ class FormModel(DataObject):
         return ef
 
     @property
+    def xform(self):
+        return self._doc.xform
+
+    @xform.setter
+    def xform(self, value):
+        self._doc.xform = value
+
+    @property
     def entity_type(self):
         unique_id_fields = self.entity_questions
         if unique_id_fields:
@@ -355,7 +363,6 @@ class FormModel(DataObject):
 
     def _validate_fields(self, fields):
         self._validate_uniqueness_of_field_codes(fields)
-        self._validate_uniqueness_of_field_labels(fields)
 
 
     def _validate_uniqueness_of_field_labels(self, fields):

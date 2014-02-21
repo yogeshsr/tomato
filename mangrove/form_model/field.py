@@ -9,7 +9,7 @@ from mangrove.form_model.validation import ChoiceConstraint, GeoCodeConstraint, 
 
 from mangrove.utils.types import is_sequence, is_empty, sequence_to_str
 from mangrove.validate import VdtValueTooBigError, VdtValueTooSmallError, VdtTypeError, VdtValueTooShortError, VdtValueTooLongError
-
+from coverage.html import escape
 
 def create_question_from(dictionary, dbm):
     """
@@ -41,8 +41,22 @@ def create_question_from(dictionary, dbm):
         return _get_short_code_field(code, dictionary, label, name, instruction, required)
     elif type == field_attributes.UNIQUE_ID_FIELD:
         return _get_unique_id_field(unique_id_type, code, dictionary, label, name, instruction, required)
+    elif type == field_attributes.FIELD_SET:
+        return _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required,
+                                    dbm)
     return None
 
+def _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required, dbm):
+    constraints, constraints_json = [], dictionary.get("constraints")
+    if constraints_json is not None:
+        constraints = constraints_factory(constraints_json)
+
+    sub_fields = dictionary.get("fields")
+    repeat_question_fields = [create_question_from(f, dbm) for f in sub_fields]
+    field = FieldSet(name=name, code=code, label=label, entity_question_flag=is_entity_question,
+                      constraints=constraints, instruction=instruction, required=required,
+                      field_set=repeat_question_fields)
+    return field
 
 def _get_text_field(code, dictionary, label, name, instruction, required):
     constraints, constraints_json = [], dictionary.get("constraints")
@@ -148,7 +162,7 @@ class field_attributes(object):
     NAME = "name"
     LIST_FIELD = "list"
     UNIQUE_ID_FIELD = "unique_id"
-
+    FIELD_SET = "field_set"
 
 class Field(object):
     def __init__(self, type="", name="", code="", label='', instruction='',
@@ -202,6 +216,10 @@ class Field(object):
 
     @property
     def is_entity_field(self):
+        return False
+
+    @property
+    def is_field_set(self):
         return False
 
     @property
@@ -489,7 +507,35 @@ class ShortCodeField(TextField):
     @property #TODO:Remove
     def is_entity_field(self):
         return True
+        
+class FieldSet(Field):
+    def __init__(self, name, code, label, constraints=None, defaultValue="", instruction=None,
+                 entity_question_flag=False, required=True, field_set=[]):
+        Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
+                       label=label, instruction=instruction, required=required)
+        self.fields = self._dict['fields'] = field_set
 
+    def is_field_set(self):
+        return True
+
+    def validate(self, value):
+        # todo call all validators of the child fields
+        Field.validate(self, value)
+        if is_sequence(value) or value is None:
+            return value
+        return [value]
+
+    #todo find the application of this
+    def convert_to_unicode(self):
+        if self.value is None:
+            return unicode("")
+        return sequence_to_str(self.value) if isinstance(self.value, list) else unicode(self.value)
+
+    def _to_json(self):
+        dict = self._dict.copy()
+        dict['instruction'] = self._dict['instruction']
+        dict['fields'] = [f._to_json() for f in self.fields]
+        return dict
 
 class HierarchyField(Field):
     def __init__(self, name, code, label, instruction=None,
@@ -531,17 +577,17 @@ class SelectField(Field):
                 elif isinstance(option, dict):
                     single_language_specific_option = option
                 else:
-                    single_language_specific_option = {'text': option}
+                    single_language_specific_option = {'text': option, 'val': option}
                 valid_choices.append(single_language_specific_option)
         self.constraint = ChoiceConstraint(
-            list_of_valid_choices=[each.get('text') for each in valid_choices],
+            list_of_valid_choices=valid_choices,
             single_select_constraint=single_select_flag, code=code)
 
     SINGLE_SELECT_FLAG = 'single_select_flag'
 
     def validate(self, value):
         Field.validate(self, value)
-        return self.constraint.validate(answer=value.replace(' ', '')) #data from ODK collect is submitted with spaces
+        return self.constraint.validate(answer=value)
 
     @property
     def options(self):
@@ -588,13 +634,25 @@ class SelectField(Field):
 
     def get_option_list(self, question_value):
         if question_value is None: return []
-        return re.findall(r'[1-9]?[a-zA-Z]', question_value)
+
+        if ',' in question_value:
+            responses = question_value.split(',')
+            responses = [r.strip() for r in responses]
+        elif ' ' in question_value:
+            responses = question_value.split(' ')
+        elif question_value in [item.get('val') for item in self._dict[self.OPTIONS]]:
+            # yes in ['yes','no']
+            responses = [question_value]
+        else:
+            responses = re.findall(r'[1-9]?[a-zA-Z]', question_value)
+
+        return responses
 
 
     def formatted_field_values_for_excel(self, value):
         if value is None: return []
 
-        options = re.findall(r'[1-9]?[a-zA-Z]', value)
+        options = self.get_option_list(value);
         result = []
         for option in options:
             option_value = self.get_value_by_option(option)
@@ -608,6 +666,11 @@ class SelectField(Field):
             options_map.update({option['val']:option['text']})
         return options_map
 
+    def escape_option_text(self):
+        for option in self._dict.get(self.OPTIONS):
+                option['text'] = escape(option['text'])  
+                
+                      
 class GeoCodeField(Field):
     type = field_attributes.LOCATION_FIELD
 
