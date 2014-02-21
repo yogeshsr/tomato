@@ -165,6 +165,14 @@ class FormModel(DataObject):
         self._doc.name = value
 
     @property
+    def xform(self):
+        return self._doc.xform
+
+    @xform.setter
+    def xform(self, value):
+        self._doc.xform = value
+
+    @property
     def entity_question(self):
         eq = None
         for f in self._form_fields:
@@ -359,7 +367,6 @@ class FormModel(DataObject):
     def _validate_fields(self, fields):
         self._validate_existence_of_only_one_entity_field(fields)
         self._validate_uniqueness_of_field_codes(fields)
-        self._validate_uniqueness_of_field_labels(fields)
 
 
     def _validate_uniqueness_of_field_labels(self, fields):

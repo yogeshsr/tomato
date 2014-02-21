@@ -34,6 +34,7 @@ class TestXform(unittest.TestCase):
         questionnaire_mock.id = 'id'
         questionnaire_mock.is_entity_type_reporter.return_value = True
         questionnaire_mock.activeLanguages = ["en"]
+        questionnaire_mock.xform = None
         with patch("mangrove.transport.xforms.xform.FormModel") as form_model_mock:
             form_model_mock.get.return_value = questionnaire_mock
             self.assertTrue(self.checker.check_output(xform_for(dbm, "someFormId", 'rep1'),
@@ -54,6 +55,7 @@ class TestXform(unittest.TestCase):
         questionnaire_mock.is_entity_type_reporter.return_value = False
         questionnaire_mock.activeLanguages = ["en"]
         questionnaire_mock.entity_question = self.text_field(code='entity_question_code')
+        questionnaire_mock.xform = None
         entity1 = Entity(dbm, short_code="shortCode1", entity_type="someType")
         entity1._doc.data['name'] = {'value': 'nameOfEntity'}
         entities = [entity1, entity1]
@@ -69,12 +71,13 @@ class TestXform(unittest.TestCase):
         dbm = Mock()
         questionnaire_mock = Mock()
         field1 = SelectField(name='name&', code='selectcode', label="", instruction='instruction&',
-            options=[{'text':'option1&'}])
+            options=[{'text':'option1&','val':'o1'}])
         questionnaire_mock.name = '<mock_name'
         questionnaire_mock.fields = [field1]
         questionnaire_mock.form_code = 'form_code'
         questionnaire_mock.id = 'id'
         questionnaire_mock.is_entity_type_reporter.return_value = True
+        questionnaire_mock.xform = None
         with patch("mangrove.transport.xforms.xform.FormModel") as form_model_mock:
             form_model_mock.get.return_value = questionnaire_mock
             one_of_unicode_unknown_ = xform_for(dbm, "someFormId", 'rep1')

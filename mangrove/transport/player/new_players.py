@@ -1,6 +1,7 @@
 import inspect
 from mangrove.form_model.form_model import NAME_FIELD, get_form_model_by_code
 from mangrove.transport.player.parser import WebParser, SMSParserFactory, XFormParser
+from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 from mangrove.transport.services.survey_response_service import SurveyResponseService
 from mangrove.utils.types import is_empty
 from mangrove.transport.repository import reporters
@@ -94,3 +95,9 @@ class XFormPlayerV2(object):
         form_code, values = self._parse(request.message)
         service = SurveyResponseService(self.dbm, logger, self.feeds_dbm)
         return service.save_survey(form_code, values, [], request.transport, request.message, reporter_id)
+
+    def update_survey_response(self, request, reporter_id, logger=None, survey_response=None, additional_feed_dictionary=None):
+        assert request is not None
+        form_code, values = self._parse(request.message)
+        service = SurveyResponseService(self.dbm, logger, self.feeds_dbm)
+        return service.edit_survey(form_code, values, [], request.transport, request.message, survey_response, additional_feed_dictionary, reporter_id)

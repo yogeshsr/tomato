@@ -126,8 +126,8 @@ class TestField(unittest.TestCase):
         expected_json = {
             "label": "What is your favorite color",
             "name": "color",
-            "choices": [{"text": "RED", "val": 1}, {"text": "YELLOW", "val": 2},
-                        {"text": 'green', "val": 3}],
+            "choices": [{"text": "RED", "val": 'a'}, {"text": "YELLOW", "val": 'b'},
+                        {"text": 'green', "val": 'c'}],
             "code": "Q3",
             
             "type": "select1",
@@ -135,7 +135,7 @@ class TestField(unittest.TestCase):
             "instruction": None
         }
         field = SelectField(name="color", code="Q3", label="What is your favorite color",
-                            options=[("RED", 1), ("YELLOW", 2), ('green', 3)])
+                            options=[("RED", 'a'), ("YELLOW", 'b'), ('green', 'c')])
         actual_json = field._to_json()
         self.assertEqual(actual_json, expected_json)
 
@@ -146,8 +146,8 @@ class TestField(unittest.TestCase):
         expected_json = {
             "label": "What is your favorite color",
             "name": "color",
-            "choices": [{"text": "RED", "val": 1}, {"text": "YELLOW", "val": 2},
-                        {"text": 'green'}],
+            "choices": [{"text": "RED", "val": 'a'}, {"text": "YELLOW", "val": 'b'},
+                        {"text": 'green', 'val':'green'}],
             "code": "Q3",
             
             "type": "select",
@@ -155,7 +155,7 @@ class TestField(unittest.TestCase):
             "instruction": "test_instruction"
         }
         field = SelectField(name="color", code="Q3", label="What is your favorite color",
-                            options=[("RED", 1), ("YELLOW", 2), ('green')], single_select_flag=False,
+                            options=[("RED", 'a'), ("YELLOW", 'b'), ('green')], single_select_flag=False,
                              instruction="test_instruction")
         actual_json = field._to_json()
         self.assertEqual(actual_json, expected_json)
@@ -164,7 +164,7 @@ class TestField(unittest.TestCase):
 
     def test_should_remove_spaces_if_present_in_answer_for_multi_select(self):
         field = SelectField(name="color", code="Q3", label="What is your favorite color",
-                            options=[("RED", 1), ("YELLOW", 2), ('green')], single_select_flag=False,
+                            options=[("RED", 'a'), ("YELLOW", 'b'), ('green')], single_select_flag=False,
                              instruction="test_instruction")
         self.assertEqual(['RED', 'YELLOW'], field.validate('a b'))
 

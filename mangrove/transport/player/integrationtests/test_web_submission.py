@@ -46,7 +46,7 @@ class TestWEBSubmission(MangroveTestCase):
         question3 = IntegerField(name="Arv stock", code="ARV", label="ARV Stock",
                                  constraints=[NumericRangeConstraint(min=15, max=120)], required=False)
         question4 = SelectField(name="Color", code="COL", label="Color",
-                                options=[("RED", 1), ("YELLOW", 2)], required=False)
+                                options=[("RED", 'a'), ("YELLOW", 'b')], required=False)
         self.form_model = FormModel(self.manager, entity_type=self.entity_type, name="aids", label="Aids form_model",
                                     form_code="clinic", type='survey', fields=[question1, question2, question3, question4])
         self.form_model.save()
