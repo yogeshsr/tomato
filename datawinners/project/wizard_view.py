@@ -67,6 +67,13 @@ def get_preview_and_instruction_links():
     }
     return links
 
+@login_required
+@session_not_expired
+@csrf_exempt
+@is_not_expired
+def upload_project(request):
+
+    return render_to_response('project/xform_project.html')
 
 @login_required
 @session_not_expired

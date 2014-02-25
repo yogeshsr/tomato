@@ -299,13 +299,13 @@ table {
     border: 1px solid #ddd !important;
   }
 }
-*,
-*:before,
-*:after {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
+/**,*/
+/**:before,*/
+/**:after {*/
+  /*-webkit-box-sizing: border-box;*/
+  /*-moz-box-sizing: border-box;*/
+  /*box-sizing: border-box;*/
+/*}*/
 
 html {
   font-size: 62.5%;
@@ -317,7 +317,7 @@ body {
   font-size: 14px;
   line-height: 1.42857;
   color: #333333;
-  background-color: white;
+  /*background-color: white;*/
 }
 
 input,
@@ -395,8 +395,8 @@ hr {
 h1, h2, h3, h4, .question.or-appearance-list-nolabel ~ .note, .question.or-appearance-label ~ .note, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: inherit;
-  font-weight: 500;
-  line-height: 1.1;
+  /*font-weight: 500;*/
+  /*line-height: 1.1;*/
   color: inherit;
 }
 h1 small,
@@ -420,12 +420,12 @@ h6 .small,
   color: #999999;
 }
 
-h1, .h1,
-h2, .h2,
-h3, .h3 {
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
+/*h1, .h1,*/
+/*h2, .h2,*/
+/*h3, .h3 {*/
+  /*margin-top: 20px;*/
+  /*margin-bottom: 10px;*/
+/*}*/
 h1 small,
 h1 .small, .h1 small,
 .h1 .small,
@@ -438,12 +438,12 @@ h3 .small, .h3 small,
   font-size: 65%;
 }
 
-h4, .question.or-appearance-list-nolabel ~ .note, .question.or-appearance-label ~ .note, .h4,
-h5, .h5,
-h6, .h6 {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
+/*h4, .question.or-appearance-list-nolabel ~ .note, .question.or-appearance-label ~ .note, .h4,*/
+/*h5, .h5,*/
+/*h6, .h6 {*/
+  /*margin-top: 10px;*/
+  /*margin-bottom: 10px;*/
+/*}*/
 h4 small, .question.or-appearance-list-nolabel ~ .note small, .question.or-appearance-label ~ .note small,
 h4 .small,
 .question.or-appearance-list-nolabel ~ .note .small,
@@ -608,11 +608,11 @@ a.bg-primary:hover {
   margin: 40px 0 20px;
   border-bottom: 1px solid #eeeeee;
 }
-
+ul,
 ul,
 ol {
   margin-top: 0;
-  margin-bottom: 10px;
+  /*margin-bottom: 10px;*/
 }
 ul ul,
 ul ol,
@@ -679,7 +679,6 @@ abbr[data-original-title] {
   cursor: help;
   border-bottom: 1px dotted #999999;
 }
-
 .initialism {
   font-size: 90%;
   text-transform: uppercase;
@@ -4601,8 +4600,8 @@ html {
 body {
   display: -ms-flexbox;
   /*IE10*/
-  display: -webkit-flex;
-  display: flex;
+  /*display: -webkit-flex;*/
+  /*display: flex;*/
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
   -moz-flex-direction: column;
@@ -4748,7 +4747,7 @@ strong {
   font-style: normal;
 }
 
-h2, h3, h4, .question.or-appearance-list-nolabel ~ .note, .question.or-appearance-label ~ .note {
+h3, h4, .question.or-appearance-list-nolabel ~ .note, .question.or-appearance-label ~ .note {
   font-family: 'OpenSans', Arial, sans-serif;
   font-weight: bold;
   font-style: normal;

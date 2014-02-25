@@ -9,6 +9,9 @@
             <li class ="{% ifactivetab 'main_nav' 'dashboard' %}active{% else %}inactive{% endifactivetab %}">
                 <a id="global_dashboard_link" href="{% url datawinners.dashboard.views.dashboard %}" class="{{ disable_link_class }}">{% trans "Dashboard" %}</a>
             </li>
+            <li class="{% ifactivetab 'main_nav' 'Xform_project'%}active{% else %}inactive{% endifactivetab %}">
+                <a id="global_Xform_project_link" href="{% url upload_project %}" class="{{ disable_link_class }}">{% trans "Xform Project" %}</a>
+            </li>
             <li  class ="{% ifactivetab 'main_nav' 'projects' %}active{% else %}inactive{% endifactivetab %}">
                 <a id="global_projects_link" href="{% url index %}" class="{{ disable_link_class }}">{% trans "Projects" %}</a>
             </li>

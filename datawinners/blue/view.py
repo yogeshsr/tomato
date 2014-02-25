@@ -43,6 +43,7 @@ class ProjectUpload(View):
         return HttpResponse(
             json.dumps(
                 {
-                    "project_name": name
+                    "project_name": name,
+                    "project_id": id
                 }),
             content_type='application/json')

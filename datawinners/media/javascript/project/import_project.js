@@ -13,6 +13,6 @@ $(function() {
 });
 function onComplete(id, fileName, responseJSON){
     $.unblockUI();
-
-    alert('Project created: ' + responseJSON.project_name)
+    alert('Project created: ' + responseJSON.project_name);
+   window.location.replace('/project/overview/' + responseJSON.project_id +'/');
  }
