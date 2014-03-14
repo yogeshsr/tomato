@@ -1,9 +1,8 @@
 import itertools
-from lxml import etree
 import os
 from xml.etree import ElementTree as ET
 
-from django.contrib.auth.models import User
+from lxml import etree
 import xmldict
 from pyxform import create_survey_element_from_dict
 from pyxform.xls2json import parse_file_to_json
@@ -14,8 +13,9 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.field import FieldSet, GeoCodeField, DateField, SelectField
+from mangrove.form_model.field import FieldSet, GeoCodeField, DateField
 from mangrove.form_model.form_model import FormModel
+
 
 # noinspection PyUnresolvedReferences
 from datawinners.search import *

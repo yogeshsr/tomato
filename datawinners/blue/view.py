@@ -34,21 +34,23 @@ class ProjectUpload(View):
         return super(ProjectUpload, self).dispatch(*args, **kwargs)
 
     def post(self, request):
+        try:
+            file_name = request.GET.get('qqfile').split('.')[0]
+            file_content = request.raw_post_data
+            tmp_file = NamedTemporaryFile(delete=True, suffix=".xls")
+            tmp_file.write(file_content)
+            tmp_file.seek(0)
 
-        file_name = request.GET.get('qqfile').split('.')[0]
-        file_content = request.raw_post_data
-        tmp_file = NamedTemporaryFile(delete=True, suffix=".xls")
-        tmp_file.write(file_content)
-        tmp_file.seek(0)
+            manager = get_database_manager(request.user)
+            questionnaire_code =  generate_questionnaire_code(manager)
+            project_name = file_name + '-' + questionnaire_code
 
-        manager = get_database_manager(request.user)
-        questionnaire_code =  generate_questionnaire_code(manager)
-        project_name = file_name + '-' + questionnaire_code
+            xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=project_name).parse()
 
-        xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=project_name).parse()
-
-        mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire_code, project_name=project_name)
-        id, name = mangroveService.create_project()
+            mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire_code, project_name=project_name)
+            id, name = mangroveService.create_project()
+        except Exception as e:
+            return HttpResponse(content_type='application/json', content=json.dumps({'error_msg':e.message}))
 
         return HttpResponse(
             json.dumps(
