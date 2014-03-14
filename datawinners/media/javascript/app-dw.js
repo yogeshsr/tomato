@@ -45,18 +45,13 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
         //check if HTML form is hardcoded or needs to be retrieved
         if ( true ) {
             $( '.guidance' ).remove();
-
-//            $.get( 'http://localhost/en/?xform=' +  window.location.href.replace('xformsurvey','xformquestionnaire'), function( data ) {
-                var $data;
-                //this replacement should move to XSLT after which the GET can just return 'xml' and $data = $(data)
-                data = xform_xml.replace( /jr\:template=/gi, 'template=' );
-//                data = data.replace( /jr\:template=/gi, 'template=' );
-                $data = $( $.parseXML( data ) );
-                formStr = ( new XMLSerializer() ).serializeToString( $data.find( 'form:eq(0)' )[ 0 ] );
-                modelStr = ( new XMLSerializer() ).serializeToString( $data.find( 'model:eq(0)' )[ 0 ] );
-                $( '#validate-form' ).before( formStr );
-                initializeForm();
-//            }, 'text' );
+            var $data;
+            data = xform_xml.replace( /jr\:template=/gi, 'template=' );
+            $data = $( $.parseXML( data ) );
+            formStr = ( new XMLSerializer() ).serializeToString( $data.find( 'form:eq(0)' )[ 0 ] );
+            modelStr = ( new XMLSerializer() ).serializeToString( $data.find( 'model:eq(0)' )[ 0 ] );
+            $( '#validate-form' ).before( formStr );
+            initializeForm();
         } else if ( $( 'form.or' ).length > 0 ) {
             $( '.guidance' ).remove();
             initializeForm();
