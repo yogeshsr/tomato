@@ -200,7 +200,7 @@ def edit_xform_submission_old(request, project_id, survey_response_id):
     survey_response = get_survey_response_by_id(manager, survey_response_id)
     submissionProcessor = XFormSubmissionProcessor()
 
-    xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(questionnaire_form_model.fields,
+    xform_instance_xml = submissionProcessor.get_model_edit_str(questionnaire_form_model.fields,
                                                                                  survey_response.values)
     xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
 
@@ -212,7 +212,7 @@ def edit_xform_submission_old(request, project_id, survey_response_id):
 
 def edit_xform_submission(request, project_id, survey_response_id):
 
-    survey_request = SurveyWebXformQuestionnaireRequest(request, project_id)
+    survey_request = SurveyWebXformQuestionnaireRequest(request, project_id, XFormSubmissionProcessor())
     if request.method == 'GET':
         return survey_request.response_for_xform_edit_get_request(survey_response_id)
 

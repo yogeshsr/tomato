@@ -188,48 +188,13 @@ class XFormSubmissionProcessor():
         else:
             return {field.code: value}
 
-    def create_xform_instance_of_submission(self, form_model_fields, submission_values):
-        # todo instead of using form_model fields, user xform to find the fields
+    def get_model_edit_str(self, form_model_fields, submission_values, project_name):
+        # todo instead of using form_model fields, use xform to find the fields
         d, s = {}, {}
         for f in form_model_fields:
             d.update(self.get_dict(f, submission_values[f.code]))
-        s.update({'instance':d})
-        instance_xml = xmldict.dict_to_xml(s)
-        instance_xml_with_ns = instance_xml.replace('>', ' xmlns="http://www.w3.org/2002/xforms">', 1)
-        return instance_xml_with_ns
-
-    def remove_and_add_new_instance(self, instance_node, new_instance_element):
-        project_model_node = [f for f in instance_node][0]
-
-        keep = ['{http://www.w3.org/2002/xforms}meta',
-            '{http://www.w3.org/2002/xforms}form_code']
-
-        keep_these = [child for child in project_model_node if child.tag in keep]
-        del project_model_node[:]
-        project_model_node.extend(keep_these)
-
-        #ET.register_namespace('', 'http://www.w3.org/2002/xforms')
-        et_fromstring = ET.fromstring(new_instance_element.encode('utf-8'))
-
-        [project_model_node.append(f) for f in et_fromstring]
-
-        return project_model_node
-
-
-    def update_instance_children(self, xform, new_instance_element):
-        ET.register_namespace('', 'http://www.w3.org/2002/xforms')
-        root = ET.fromstring(xform.encode('utf-8'))
-        # todo find a better way instead of using getiterator
-        [self.remove_and_add_new_instance(e, new_instance_element)
-            for e in root.getiterator() if e.tag == '{http://www.w3.org/2002/xforms}instance']
-
-        return ET.tostring(root)
-
-
-    def xform_edit_submission(self, form_fields, xform, submission_values):
-        instance_xml = self.create_xform_instance_of_submission(form_fields, submission_values)
-        submission_xform = self.update_instance_children(xform, instance_xml)
-        return submission_xform
+        s.update({project_name:d})
+        return xmldict.dict_to_xml(s)
 
 DIR = os.path.dirname(__file__)
 

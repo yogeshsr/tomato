@@ -50,6 +50,7 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
             $data = $( $.parseXML( data ) );
             formStr = ( new XMLSerializer() ).serializeToString( $data.find( 'form:eq(0)' )[ 0 ] );
             modelStr = ( new XMLSerializer() ).serializeToString( $data.find( 'model:eq(0)' )[ 0 ] );
+
             $( '#validate-form' ).before( formStr );
             initializeForm();
         } else if ( $( 'form.or' ).length > 0 ) {
@@ -91,7 +92,7 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
         //initialize the form
 
         function initializeForm() {
-            form = new Form( 'form.or:eq(0)', modelStr );
+            form = new Form( 'form.or:eq(0)', modelStr, dataStrToEdit );
             //for debugging
             window.form = form;
             //initialize form and check for load errors

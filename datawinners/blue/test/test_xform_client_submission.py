@@ -64,7 +64,7 @@ class TestXFromClientSubmission(unittest.TestCase):
         xform_024 = open(self.XFORM_XML, 'r').read()
         form_fields, survey_response_values = self.create_test_fields_and_survey()
         submissionProcessor = XFormSubmissionProcessor()
-        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+        xform_instance_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values)
 
         xform_with_submission = submissionProcessor.update_instance_children(xform_024, xform_instance_xml)
 
@@ -89,7 +89,7 @@ class TestXFromClientSubmission(unittest.TestCase):
         xform = open(self.XFORM_XML_ALL_FIELDS, 'r').read()
         form_fields, survey_response_values = self.create_test_fields_and_survey_for_all_fields_type()
         submissionProcessor = XFormSubmissionProcessor()
-        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+        xform_instance_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values)
 
         xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
 
@@ -138,11 +138,11 @@ class TestXFromClientSubmission(unittest.TestCase):
                                              {'centername': 'Weene', 'area': 'Bgh'}], 'eid': 'rep276'}
         return form_fields, survey_response_values
 
-    def test_should_create_xform_instance_for_submission(self):
+    def test_should_create_xform_model_str(self):
         form_fields, survey_response_values = self.create_test_fields_and_survey()
         submissionProcessor = XFormSubmissionProcessor()
-        expected_xml = '<instance xmlns="http://www.w3.org/2002/xforms"><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></instance>'
+        expected_xml = '<project-name-01><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></project-name-01>'
 
-        instance_node_xml = submissionProcessor.create_xform_instance_of_submission(form_fields, survey_response_values)
+        instance_node_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values, 'project-name-01')
 
         self.assertEqual(expected_xml, instance_node_xml)

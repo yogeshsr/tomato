@@ -75,7 +75,7 @@ def upload_project(request):
 @project_has_web_device
 @is_not_expired
 def xform_survey_web_questionnaire(request, project_id=None):
-    survey_request = SurveyWebXformQuestionnaireRequest(request, project_id)
+    survey_request = SurveyWebXformQuestionnaireRequest(request, project_id,  XFormSubmissionProcessor())
     if request.method == 'GET':
         return survey_request.response_for_get_request()
 
@@ -100,8 +100,9 @@ def xform_questionnaire(request, project_id=None):
 
 class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
 
-    def __init__(self, request, project_id=None):
+    def __init__(self, request, project_id=None, submissionProcessor=None):
         SurveyWebQuestionnaireRequest.__init__(self, request, project_id)
+        self.submissionProcessor = submissionProcessor
 
     @property
     def template(self):
@@ -119,14 +120,11 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
-    def _xform_with_submission(self, survey_response_id):
-        xform = self.form_model.xform
+    def _model_str_of(self, survey_response_id, project_name):
         survey_response = get_survey_response_by_id(self.manager, survey_response_id)
-        submissionProcessor = XFormSubmissionProcessor()
-
-        xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(self.form_model.fields,
-                                                                                     survey_response.values)
-        return submissionProcessor.update_instance_children(xform, xform_instance_xml)
+        xform_instance_xml = self.submissionProcessor.\
+            get_model_edit_str(self.form_model.fields, survey_response.values, project_name)
+        return xform_instance_xml
 
     def response_for_xform_edit_get_request(self, survey_response_id):
 
@@ -140,6 +138,8 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
 
         if self.form_model.xform:
             form_context.update({'survey_response_id': survey_response_id })
-            form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self._xform_with_submission(survey_response_id)).transform())})
+            form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self.form_model.xform).transform())})
+            form_context.update({'edit_model_str': self._model_str_of(survey_response_id, self.project.name)})
+
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))

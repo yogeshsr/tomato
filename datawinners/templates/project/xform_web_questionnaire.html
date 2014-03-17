@@ -44,6 +44,7 @@
             var submissionLogURL='{{ project_links.submission_log_link }}';
             var submissionURL ='{{ project_links.xform_link }}'
             var xform_xml = $('<div/>').html("{{ xform_xml }}").text();
+            var dataStrToEdit = $('<div/>').html("{{ edit_model_str }}").text();
             console.log(xform_xml);
         </script>
         <script type="text/javascript" data-main="/media/javascript/app-dw.js" src="/media/enketo-core/lib/require.js"></script>
