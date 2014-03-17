@@ -17,20 +17,12 @@
 {% block page_js %}
     {{ block.super }}
     <script type="text/javascript" src="/media/javascript/home/dashboard.js"></script>
-    <script type="text/javascript" src="/media/javascript/file_uploader/fileuploader.js"></script>
-    <script type="text/javascript" src="/media/javascript/project/import_project.js"></script>
 {% endblock %}
 
 {% block navigation %}
     <div class="grid_24">
         <div class="grid_11 margin_left_null margin_bottom_20 create_proj_button">
-             <noscript>
-                <p>{% trans "Please enable JavaScript to use file uploader." %}</p>
-        </noscript>
-    <div id="file_uploader" class="button" style="width:200px;"></div>
-{#            <a id="create_project_link" href="{% url upload_project%}" class="button">{% trans "Upload Xform Project" %}</a>#}
-{#            <img src="/media/images/help_icon.png" class="help_icon" style="margin-top:-6px;">#}
-{#            <div class="tooltip"><p>{% trans "help_project_creation"%}</p></div>#}
+            <a id="create_project_link" href="{% url datawinners.project.wizard_view.create_project%}?prev=dash#create" class="button">{% trans "Create a New Questionnaire" %}</a>
         </div>
     </div>
 {% endblock %}
