@@ -11,6 +11,7 @@
     <script src="/media/javascript/project/bind_project_links.js" type="text/javascript"></script>
     <script type="text/javascript">
         var subject_type = "{{ entity_type|capfirst }}";
+        var is_advance_questionnaire = '{{ is_advance_questionnaire }}';
     </script>
 {% endblock %}
 
@@ -60,15 +61,15 @@
         <li class="{% ifactivetab 'tab_nav' 'overview' %}active{% else %}inactive{% endifactivetab %}">
             <a id="overview_tab" href="{{ project_links.overview_link }}" class="{{ disable_link_class }}">{% trans "Overview" %}</a>
         </li>
-{#        <li class="{% ifactivetab 'tab_nav' 'questionnaire' %}active{% else %}inactive{% endifactivetab %}">#}
-{#            <a id="questionnaire_tab" href="{{ project_links.questionnaire_link }}"#}
-{#               class="{{ disable_link_class }}">{% trans "Questionnaire" %}</a>#}
-{#        </li>#}
+        <li class="{% ifactivetab 'tab_nav' 'questionnaire' %}active{% else %}inactive{% endifactivetab %}">
+            <a id="questionnaire_tab" href="{{ project_links.questionnaire_link }}"
+               class="{{ disable_link_class }}">{% trans "Questionnaire" %}</a>
+        </li>
         <li class="{% ifactivetab 'tab_nav' 'data_senders' %}active{% else %}inactive{% endifactivetab %}">
             <a id="data_senders_tab" href="{{ project_links.registered_datasenders_link}}"
                class="{{ disable_link_class }}">{% trans "My Data Senders" %}</a>
         </li>
-        {% if 'no' in project.activity_report%}
+        {% if 'no' in project.activity_report and not is_advance_questionnaire %}
             <li class="{% ifactivetab 'tab_nav' 'subjects' %}active{% else %}inactive{% endifactivetab %}">
                 <a id="subjects_tab" href="{{ project_links.subjects_link }}" class="{{ disable_link_class }}">{% trans "My Subjects" %}</a>
             </li>
@@ -79,9 +80,11 @@
         <li class="{% ifactivetab 'tab_nav' 'data' %}active{% else %}inactive{% endifactivetab %}">
             <a id="data_tab" href="{{ project_links.data_analysis_link }}" class="{{ disable_link_class }}">{% trans "Data" %}</a>
         </li>
-{#        <li class="{% ifactivetab 'tab_nav' 'send_a_message' %}active{% else %}inactive{% endifactivetab %}">#}
-{#            <a id="send_message_tab" href="{{ project_links.broadcast_message_link }}" class="{{ disable_link_class }}">{% trans "Send a Message" %}</a>#}
-{#        </li>#}
+        {% if not is_advance_questionnaire %}
+        <li class="{% ifactivetab 'tab_nav' 'send_a_message' %}active{% else %}inactive{% endifactivetab %}">
+            <a id="send_message_tab" href="{{ project_links.broadcast_message_link }}" class="{{ disable_link_class }}">{% trans "Send a Message" %}</a>
+        </li>
+        {% endif %}
     </ul>
 </div>
 {% endblock %}
@@ -97,9 +100,16 @@
         <a href="{{ project_links.submission_log_link }}"
            class="{{ disable_link_class }}">{% trans "Submission Log" %}</a>
     </li>
+    {% if project_links.test_questionnaire_link != "" and not is_advance_questionnaire %}
+    <li class="{% ifactivetab 'secondary_tab_nav' 'web_questionnaire' %}active{% else %}inactive{% endifactivetab %}">
+        <a href="{{ project_links.test_questionnaire_link }}">{% trans "Web Submission" %}</a>
+    </li>
+    {% endif %}
+    {% if is_advance_questionnaire %}
     <li class="{% ifactivetab 'secondary_tab_nav' 'xform_web_questionnaire' %}active{% else %}inactive{% endifactivetab %}">
         <a href="{{ project_links.xform_link }}">{% trans "Submission" %}</a>
     </li>
+    {% endif %}
 </ul>
 {% endblock %}
 

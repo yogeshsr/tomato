@@ -70,7 +70,8 @@ def project_info(request, manager, form_model, project, questionnaire_code): #re
             'questionnaire_code': questionnaire_code, 'in_trial_mode': in_trial_mode,
             'reporting_period_question_text': rp_field.label if has_rp else None,
             'has_reporting_period': has_rp,
-            'is_summary_report': is_summary_report}
+            'is_summary_report': is_summary_report,
+            'is_advance_questionnaire': True if form_model.xform else False}
 
 def is_quota_reached(request, organization=None, org_id=None):
     if not organization:
