@@ -109,6 +109,7 @@ class SurveyResponseService(object):
 
     def log_request(self, status, source, message):
         if self.logger is not None:
-            log_entry = "message: " + message.encode('utf-8') + "|source: " + source.encode('utf-8') + "|"
+            log_msg = message.encode('utf-8') if type(message) is unicode else str(message)
+            log_entry = "message: " + log_msg + "|source: " + source.encode('utf-8') + "|"
             log_entry += "status: True" if status else "status: False"
             self.logger.info(log_entry)
