@@ -23,7 +23,7 @@ from datawinners.search import *
 
 class XlsFormParser():
     type_dict = {'repeat': ['repeat'],
-                 'field': ['text', 'integer', 'date', 'geopoint'],
+                 'field': ['text', 'integer', 'decimal', 'date', 'geopoint'],
                  'select': ['select one', 'select all that apply']
                  }
     supported_type = list(itertools.chain(*type_dict.values()))
@@ -61,26 +61,26 @@ class XlsFormParser():
         group_name = repeat['name']
         children = repeat['children']
         questions = [self._create_question(c) for c in children if c['type'] in self.supported_type]
-        q = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
+        question = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
                  "code": group_name, "name": group_label, 'required': False,
                  "instruction": "No answer required",
                  'fields':questions}
-        return q
+        return question
 
     def _field(self, field):
-        xform_dw_type_dict = {'text': 'text', 'integer': 'integer', 'date': 'date', 'geopoint': 'geocode'}
-        help_dict = {'text': 'word', 'integer': 'number', 'date': 'date', 'geopoint': 'geopoint'}
+        xform_dw_type_dict = {'geopoint': 'geocode'}
+        help_dict = {'text': 'word', 'integer': 'number', 'decimal': 'decimal or number'}
         name = field['label']
         code = field['name']
         type = field['type']
 
-        q = {'title': name, 'type': xform_dw_type_dict[type], "is_entity_question": False,
+        question = {'title': name, 'type': xform_dw_type_dict.get(type, type), "is_entity_question": False,
                  "code": code, "name": name, 'required': self.is_required(field),
-                 "instruction": "Answer must be a %s" % help_dict[type]} # todo help text need improvement
+                 "instruction": "Answer must be a %s" % help_dict.get(type, type)} # todo help text need improvement
         if type == 'date':
-                q.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
+                question.update({'date_format': 'dd.mm.yyyy', 'event_time_field_flag': False,
                           "instruction": "Answer must be a date in the following format: day.month.year. Example: 25.12.2011"})
-        return q
+        return question
 
     def _select(self, field):
         name = field['label']
