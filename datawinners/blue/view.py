@@ -117,6 +117,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
                                         self.manager, self.hide_link_class, self.disable_link_class, is_update)
         if self.form_model.xform:
             form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self.form_model.xform).transform())})
+            form_context.update({'is_advance_questionnaire': True})
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
@@ -140,6 +141,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
             form_context.update({'survey_response_id': survey_response_id })
             form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self.form_model.xform).transform())})
             form_context.update({'edit_model_str': self._model_str_of(survey_response_id, self.project.name)})
+            form_context.update({'is_advance_questionnaire': True})
 
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
