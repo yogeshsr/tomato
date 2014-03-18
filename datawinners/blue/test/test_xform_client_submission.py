@@ -60,17 +60,6 @@ class TestXFromClientSubmission(unittest.TestCase):
 
         # todo fetch submission doc and verify; append something unique to submission to make it specific
 
-    def test_should_update_xform_instance_with_submission_data(self):
-        xform_024 = open(self.XFORM_XML, 'r').read()
-        form_fields, survey_response_values = self.create_test_fields_and_survey()
-        submissionProcessor = XFormSubmissionProcessor()
-        xform_instance_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values)
-
-        xform_with_submission = submissionProcessor.update_instance_children(xform_024, xform_instance_xml)
-
-        #todo asset submission in xml
-        print xform_with_submission
-
     def create_code_value(self, node):
         if node.getchildren():
             return {node.tag.split('}')[1]: [self.create_code_value(c) for c in node.getchildren()]}
@@ -141,8 +130,8 @@ class TestXFromClientSubmission(unittest.TestCase):
     def test_should_create_xform_model_str(self):
         form_fields, survey_response_values = self.create_test_fields_and_survey()
         submissionProcessor = XFormSubmissionProcessor()
-        expected_xml = '<project-name-01><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center></project-name-01>'
+        expected_xml = '<project-name-01><city>Bhopal</city><center><centername>Boot</centername><area>New Market</area></center><center><centername>Weene</centername><area>Bgh</area></center><form_code>form_code-01</form_code></project-name-01>'
 
-        instance_node_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values, 'project-name-01')
+        instance_node_xml = submissionProcessor.get_model_edit_str(form_fields, survey_response_values, 'project-name-01', 'form_code-01')
 
         self.assertEqual(expected_xml, instance_node_xml)

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import itertools
 import os
 from xml.etree import ElementTree as ET
@@ -188,9 +189,9 @@ class XFormSubmissionProcessor():
         else:
             return {field.code: value}
 
-    def get_model_edit_str(self, form_model_fields, submission_values, project_name):
+    def get_model_edit_str(self, form_model_fields, submission_values, project_name, form_code):
         # todo instead of using form_model fields, use xform to find the fields
-        d, s = {}, {}
+        d, s = {'form_code':form_code}, {}
         for f in form_model_fields:
             d.update(self.get_dict(f, submission_values[f.code]))
         s.update({project_name:d})

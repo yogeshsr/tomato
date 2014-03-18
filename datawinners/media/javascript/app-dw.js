@@ -43,20 +43,15 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
         }
 
         //check if HTML form is hardcoded or needs to be retrieved
-        if ( true ) {
-            $( '.guidance' ).remove();
-            var $data;
-            data = xform_xml.replace( /jr\:template=/gi, 'template=' );
-            $data = $( $.parseXML( data ) );
-            formStr = ( new XMLSerializer() ).serializeToString( $data.find( 'form:eq(0)' )[ 0 ] );
-            modelStr = ( new XMLSerializer() ).serializeToString( $data.find( 'model:eq(0)' )[ 0 ] );
+        $( '.guidance' ).remove();
+        var $data;
+        data = xform_xml.replace( /jr\:template=/gi, 'template=' );
+        $data = $( $.parseXML( data ) );
+        formStr = ( new XMLSerializer() ).serializeToString( $data.find( 'form:eq(0)' )[ 0 ] );
+        modelStr = ( new XMLSerializer() ).serializeToString( $data.find( 'model:eq(0)' )[ 0 ] );
 
-            $( '#validate-form' ).before( formStr );
-            initializeForm();
-        } else if ( $( 'form.or' ).length > 0 ) {
-            $( '.guidance' ).remove();
-            initializeForm();
-        }
+        $( '#validate-form' ).before( formStr );
+        initializeForm();
 
         //validate handler for validate button
         $( '#validate-form' ).on( 'click', function() {

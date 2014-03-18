@@ -124,7 +124,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
     def _model_str_of(self, survey_response_id, project_name):
         survey_response = get_survey_response_by_id(self.manager, survey_response_id)
         xform_instance_xml = self.submissionProcessor.\
-            get_model_edit_str(self.form_model.fields, survey_response.values, project_name)
+            get_model_edit_str(self.form_model.fields, survey_response.values, project_name, self.form_model.form_code)
         return xform_instance_xml
 
     def response_for_xform_edit_get_request(self, survey_response_id):
