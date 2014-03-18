@@ -6,12 +6,11 @@ import re
 
 from babel.dates import format_date
 import xlrd
-import xmldict
 import xmltodict
 
 from mangrove.errors.MangroveException import MultipleSubmissionsForSameCodeException, SMSParserInvalidFormatException, \
     CSVParserInvalidHeaderFormatException, XlsParserInvalidHeaderFormatException
-from mangrove.form_model.field import SelectField, GeoCodeField, DateField, IntegerField, FieldSet
+from mangrove.form_model.field import GeoCodeField, DateField, IntegerField, FieldSet
 from mangrove.form_model.form_model import get_form_model_by_code
 from mangrove.utils.types import is_empty, is_string
 from mangrove.contrib.registration import REGISTRATION_FORM_CODE
