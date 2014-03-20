@@ -12,6 +12,7 @@ from django.views.generic.base import View
 from datawinners import settings
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device
+from datawinners.accountmanagement.models import NGOUserProfile
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor
 from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code, is_project_exist
@@ -19,6 +20,9 @@ from datawinners.project.models import Project
 from datawinners.project.utils import is_quota_reached
 from datawinners.project.views.utils import get_form_context
 from datawinners.project.views.views import SurveyWebQuestionnaireRequest
+from datawinners.project.wizard_view import update_questionnaire, update_associated_submissions, \
+    _get_deleted_question_codes
+from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from mangrove.form_model.form_model import FormModel
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
@@ -57,6 +61,62 @@ class ProjectUpload(View):
                 {
                     "project_name": name,
                     "project_id": id
+                }),
+            content_type='application/json')
+
+
+class ProjectUpdate(View):
+
+    @method_decorator(csrf_view_exempt)
+    @method_decorator(csrf_response_exempt)
+    @method_decorator(login_required)
+    @method_decorator(session_not_expired)
+    @method_decorator(is_not_expired)
+    def dispatch(self, *args, **kwargs):
+        return super(ProjectUpdate, self).dispatch(*args, **kwargs)
+
+    def post(self, request, project_id):
+        manager = get_database_manager(request.user)
+        old_project = Project.load(manager.database, project_id)
+        questionnaire = FormModel.get(manager, old_project.qid)
+        try:
+            file_name = request.GET.get('qqfile').split('.')[0]
+            file_content = request.raw_post_data
+            tmp_file = NamedTemporaryFile(delete=True, suffix=".xls")
+            tmp_file.write(file_content)
+            tmp_file.seek(0)
+            is_project_name_changed = file_name != questionnaire.name
+            xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=old_project.name).parse()
+            mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire.form_code, project_name=questionnaire.name)
+
+            old_fields = questionnaire.fields
+            old_form_code = questionnaire.form_code
+            old_field_codes = questionnaire.field_codes()
+
+            questionnaire.name = file_name
+            questionnaire.activeLanguages = old_project.language
+            questionnaire.entity_type = ['reporter']
+            questionnaire.form_code = old_project.name.split('-')[1]
+            QuestionnaireBuilder(questionnaire, manager).update_questionnaire_with_questions(json_xform_data)
+            questionnaire.xform = mangroveService.xform_with_form_code
+
+            old_project.qid = questionnaire.save()
+
+            deleted_question_codes = _get_deleted_question_codes(old_codes=old_field_codes,
+                                                                 new_codes=questionnaire.field_codes())
+            update_associated_submissions(manager.database_name, old_form_code,
+                                                questionnaire.form_code,
+                                                deleted_question_codes)
+
+            old_project.save(manager, process_post_update=is_project_name_changed)
+        except Exception as e:
+            return HttpResponse(content_type='application/json', content=json.dumps({'error_msg':e.message}))
+
+        return HttpResponse(
+            json.dumps(
+                {
+                    "project_name": old_project.name,
+                    "project_id": old_project.id
                 }),
             content_type='application/json')
 

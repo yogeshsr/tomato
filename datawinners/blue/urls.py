@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import patterns, url
-from datawinners.blue.view import ProjectUpload, upload_project
+from datawinners.blue.view import ProjectUpload, upload_project, ProjectUpdate
 from datawinners.project.views import submission_views
 from datawinners.blue.view import xform_questionnaire, xform_survey_web_questionnaire
 
@@ -19,4 +19,5 @@ urlpatterns = patterns('',
                        url(r'^project/(?P<project_id>.+?)/submissions/edit_xform/(?P<survey_response_id>[^\\/]+?)/$',
                            submission_views.edit_xform_submission, name="edit_xform_submission"),
                        url(r'^xlsform/upload/$', ProjectUpload.as_view(), name="import_project"),
+                       url(r'^xlsform/upload/update/(?P<project_id>\w+?)/$', ProjectUpdate.as_view(), name="update_project"),
 )

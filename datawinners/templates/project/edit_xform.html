@@ -1,0 +1,57 @@
+{% extends 'project/tab_navigation.html' %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Project - Questionnaire" %} {% endblock %}
+
+{% load dw_tabs %}
+
+{% block navigation %}
+    {% activetab "tab_nav" "questionnaire" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block body %}
+    {% activetab "main_nav" "projects" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block page_scss %}
+    {{ block.super }}
+    <link href="/media/css/scss/section_questionnaire_preview.css" rel="stylesheet"/>
+    <link href="/media/css/scss/section_questionnaire.css" rel="stylesheet"/>
+    <link href="/media/css/scss/section_new_create_project.css" rel="stylesheet"/>
+    <link href="/media/css/scss/smart_phone_instruction.css" rel="stylesheet" />
+{% endblock %}
+
+{% block page_js %}
+    {{ block.super }}
+        <script type="text/javascript" src="/media/javascript/file_uploader/fileuploader.js"></script>
+         <script type="text/javascript" src="/media/javascript/project/update_project.js"></script>
+    <script type="text/javascript">
+        var subject_registration_form_preview_link = "{{ project_links.subject_registration_preview_link }}";
+        var sender_registration_form_preview_link = "{{ project_links.sender_registration_preview_link }}";
+        var sms_preview_link = "{{ preview_links.sms_preview }}";
+        var web_preview_link = "{{ preview_links.web_preview }}";
+        var smart_phone_preview_link = "{{ preview_links.smart_phone_preview }}";
+        var existing_questionnaire_code = "{{ questionnaire_code }}";
+        var project_language = "{{ project.language }}";
+        var project_name = "{{ project.name }}";
+        var project_has_submissions = "{{ project_has_submissions }}";
+        var post_url = "{{ post_url }}"
+        var project_id = "{{ project_id }}"
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div>
+        <div class="questionnaire_type_header">
+            <span class="header">{% trans "Upload a XLXForm" %}</span>
+        </div>
+        <div>
+            <noscript>
+                <p>{% trans "Please enable JavaScript to use file uploader." %}</p>
+            </noscript>
+            <div id="file_uploader" class="button" style="width:200px;"></div>
+        </div>
+    </div>
+{% endblock %}

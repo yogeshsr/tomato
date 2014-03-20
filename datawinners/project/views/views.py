@@ -505,7 +505,21 @@ def questionnaire(request, project_id):
         success, error = submission_stats(manager, form_model.form_code)
         project_has_submissions = (success + error > 0)
         in_trial_mode = _in_trial_mode(request)
-        return render_to_response('project/questionnaire.html',
+        if form_model.xform:
+            return render_to_response('project/edit_xform.html',
+                                  {"existing_questions": repr(existing_questions),
+                                   'questionnaire_code': form_model.form_code,
+                                   'project': project,
+                                   'project_id': project_id,
+                                   'project_has_submissions': project_has_submissions,
+                                   'project_links': project_links,
+                                   'is_quota_reached': is_quota_reached(request),
+                                   'in_trial_mode': in_trial_mode,
+                                   'post_url': reverse(edit_project, args=[project_id]),
+                                   'preview_links': get_preview_and_instruction_links_for_questionnaire()},
+                                  context_instance=RequestContext(request))
+        else:
+            return render_to_response('project/questionnaire.html',
                                   {"existing_questions": repr(existing_questions),
                                    'questionnaire_code': form_model.form_code,
                                    'project': project,
