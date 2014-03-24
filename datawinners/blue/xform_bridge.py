@@ -23,7 +23,7 @@ from datawinners.search import *
 
 class XlsFormParser():
     type_dict = {'repeat': ['repeat'],
-                 'field': ['text', 'integer', 'decimal', 'date', 'geopoint'],
+                 'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate'],
                  'select': ['select one', 'select all that apply']
                  }
     supported_type = list(itertools.chain(*type_dict.values()))
@@ -68,9 +68,9 @@ class XlsFormParser():
         return question
 
     def _field(self, field):
-        xform_dw_type_dict = {'geopoint': 'geocode'}
-        help_dict = {'text': 'word', 'integer': 'number', 'decimal': 'decimal or number'}
-        name = field['label']
+        xform_dw_type_dict = {'geopoint': 'geocode', 'decimal': 'integer', 'calculate': 'integer'}
+        help_dict = {'text': 'word', 'integer': 'number', 'decimal': 'decimal or number', 'calculate': 'number'}
+        name = field.get('label') if field.get('label') else 'fixthis'
         code = field['name']
         type = field['type']
 
