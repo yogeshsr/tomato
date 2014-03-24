@@ -316,8 +316,14 @@ class XFormParser(object):
         return type(value) is list
 
     def _fetch_string_value(self, message):
-        return {code: self._to_str(value) if not self.is_field_set_answer(value) else value
-                    for code, value in message.iteritems()}
+        str_dict = OrderedDict()
+        for code, value in message.iteritems():
+            if not self.is_field_set_answer(value):
+                str_dict.update({code: self._to_str(value)})
+            else:
+                str_dict.update({code: value})
+
+        return str_dict
 
     def parse(self, message):
         submission_dict = xmltodict.parse(message, 'utf-8').values()[0]
