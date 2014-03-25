@@ -100,5 +100,18 @@ class SubmissionExcelHeader():
                 result.get(field_name).update({"type": field.type})
                 if field.type == "date":
                     result.get(field_name).update({"format": field.date_format})
-
+                if field.type == "field_set":
+                    result.get(field_name).update({"fields" : self.get_sub_fields_of(field)})
         return result
+
+    def get_sub_fields_of(self, field):
+        col = {}
+        for field in field.fields:
+            details = {"type": field.type, "label": field.label}
+            col.update({field.code: details})
+            if field.type == "date":
+                details.update({"format": field.date_format})
+            if field.type == "field_set":
+                details.update({"fields" : self.get_sub_fields_of(field)})
+
+        return col

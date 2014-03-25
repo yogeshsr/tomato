@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import itertools
 import os
 from xml.etree import ElementTree as ET

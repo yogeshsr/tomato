@@ -209,7 +209,3 @@ class TestXFormBridge(unittest.TestCase):
 
         self.assertEquals(r.status_code, 200)
         self.assertNotEqual(r._container[0].find('project_name'), -1)
-
-    # def test_a(self):
-    #     f = open('testdata/contacts.csv','r').read(1024)
-    #     print f

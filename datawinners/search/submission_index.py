@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import OrderedDict
 from string import lower
@@ -261,7 +262,7 @@ def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model)
                 pass
         if entry:
             if type(field) is FieldSet:
-                search_dict.update({es_field_name(lower(field.code), form_model.id): str(entry)})
+                search_dict.update({es_field_name(lower(field.code), form_model.id): json.dumps(entry)})
             else:
                 search_dict.update({es_field_name(lower(field.code), form_model.id): entry})
 

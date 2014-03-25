@@ -16,6 +16,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_view_exempt
 from elasticutils import F
 import jsonpickle
+from datawinners.blue.xform_submission_exporter import XFormSubmissionExporter
 from datawinners.blue.view import SurveyWebXformQuestionnaireRequest
 from datawinners import settings
 from datawinners.accountmanagement.decorators import is_datasender, session_not_expired, is_not_expired, valid_web_user
@@ -358,6 +359,10 @@ def export(request):
     search_text = search_filters.get("search_text", '')
     query_params.update({"search_text": search_text})
     query_params.update({"filter": submission_type})
+
+    if form_model.xform:
+        return XFormSubmissionExporter(form_model, project_name, request.user) \
+        .create_excel_response(submission_type, query_params)
 
     return SubmissionExporter(form_model, project_name, request.user) \
         .create_excel_response(submission_type, query_params)
