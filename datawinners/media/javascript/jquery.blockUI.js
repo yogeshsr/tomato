@@ -33,6 +33,9 @@ var ie6 = $.browser.msie && /MSIE 6.0/.test(navigator.userAgent) && !mode;
 $.blockUI   = function(opts) { install(window, opts); };
 $.unblockUI = function(opts) { remove(window, opts); };
 
+DW.blockUI = $.blockUI;
+DW.unblockUI = $.unblockUI;
+
 // convenience method for quick growl-like notifications  (http://www.google.com/search?q=growl)
 $.growlUI = function(title, message, timeout, onClose) {
 	var $m = $('<div class="growlUI"></div>');

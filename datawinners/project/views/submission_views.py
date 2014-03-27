@@ -4,7 +4,7 @@ import json
 import re
 import datetime
 import logging
-from string import capitalize, lower
+from string import capitalize
 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.decorators import login_required
@@ -16,11 +16,12 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_view_exempt
 from elasticutils import F
 import jsonpickle
-from mangrove.errors.MangroveException import FormModelDoesNotExistsException
+from datawinners.blue.view import SurveyWebXformQuestionnaireRequest
 from datawinners import settings
 from datawinners.accountmanagement.decorators import is_datasender, session_not_expired, is_not_expired, valid_web_user
 
 from datawinners.accountmanagement.models import NGOUserProfile
+from datawinners.blue.xform_bridge import XFormSubmissionProcessor
 from datawinners.feeds.database import get_feeds_database
 from datawinners.feeds.mail_client import mail_feed_errors
 from datawinners.main.database import get_database_manager
@@ -191,6 +192,29 @@ def construct_request_dict(survey_response, questionnaire_form_model):
     result_dict.update({'form_code': questionnaire_form_model.form_code})
     return result_dict
 
+def edit_xform_submission_old(request, project_id, survey_response_id):
+    manager = get_database_manager(request.user)
+    project = Project.load(manager.database, project_id)
+    questionnaire_form_model = FormModel.get(manager, project.qid)
+    xform = questionnaire_form_model.xform
+    survey_response = get_survey_response_by_id(manager, survey_response_id)
+    submissionProcessor = XFormSubmissionProcessor()
+
+    xform_instance_xml = submissionProcessor.create_xform_instance_of_submission(questionnaire_form_model.fields,
+                                                                                 survey_response.values)
+    xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
+
+    response = HttpResponse(content_type='application/xml')
+    response['Content-Disposition'] = 'attachment; filename=form.xml'
+    response.write(xform_with_submission)
+    response['Content-Length'] = len(response.content)
+    return response
+
+def edit_xform_submission(request, project_id, survey_response_id):
+
+    survey_request = SurveyWebXformQuestionnaireRequest(request, project_id)
+    if request.method == 'GET':
+        return survey_request.response_for_xform_edit_get_request(survey_response_id)
 
 @valid_web_user
 def edit(request, project_id, survey_response_id, tab=0):

@@ -1,0 +1,22 @@
+from django.conf.urls.defaults import patterns, url
+from datawinners.blue.view import ProjectUpload, upload_project
+from datawinners.project.views import submission_views
+from datawinners.blue.view import xform_questionnaire, xform_survey_web_questionnaire
+
+urlpatterns = patterns('',
+                       #todo remove this after enketo is embedded to DW
+                       # called by php; kept for debugging
+                       url(r'^project/xformsurvey/(?P<project_id>\w+?)/$', xform_survey_web_questionnaire,
+                           name="xform_web_questionnaire"),
+                       # dw url of standalone enketto; kept for debugging
+                       url(r'^project/(?P<project_id>.+?)/submissions/edit_xform_old/(?P<survey_response_id>[^\\/]+?)/$',
+                           submission_views.edit_xform_submission_old, name="edit_xform_submission_old"),
+
+
+                       url(r'^project_upload/$', upload_project, name="upload_project"),
+                       url(r'^project/xformquestionnaire/(?P<project_id>\w+?)/$', xform_questionnaire,
+                           name="xform_questionnaire"),
+                       url(r'^project/(?P<project_id>.+?)/submissions/edit_xform/(?P<survey_response_id>[^\\/]+?)/$',
+                           submission_views.edit_xform_submission, name="edit_xform_submission"),
+                       url(r'^xlsform/upload/$', ProjectUpload.as_view(), name="import_project"),
+)

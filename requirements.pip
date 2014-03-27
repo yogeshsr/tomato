@@ -42,3 +42,5 @@ django-urlmiddleware
 celery
 flower
 -e git+https://github.com/mangroveorg/mangrove.git@develop#egg=mangrove
+pyxform
+xmltodict==0.8.6

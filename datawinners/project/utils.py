@@ -32,7 +32,9 @@ def make_project_links(project, questionnaire_code):
                      'current_language': translation.get_language(),
                      'data_analysis_link': reverse("submission_analysis", args=[project_id, questionnaire_code]),
                      'submission_log_link': reverse("submissions", args=[project_id, questionnaire_code]),
-                     'reminders_link': reverse('reminder_settings', args=[project_id])}
+                     'reminders_link': reverse('reminder_settings', args=[project_id]),
+                        'xform_link': reverse("xform_web_questionnaire", args=[project_id])
+    }
 
     project_links.update(make_subject_links(project_id))
     project_links.update(make_data_sender_links(project_id))

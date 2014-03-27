@@ -1,0 +1,31 @@
+{% extends 'layout_application.html' %}
+{% load i18n %}
+{% block page_title %} {% trans "Create Project" %}{% endblock %}
+
+{% load dw_tabs %}
+
+{% block body %}
+    {% activetab "main_nav" "Xform_project" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block page_js %}
+    <script type="text/javascript" src="/media/javascript/file_uploader/fileuploader.js"></script>
+    <script type="text/javascript" src="/media/javascript/project/import_project.js"></script>
+{% endblock %}
+
+{% block content %}
+       <div>
+        <div style="font-size:18px; margin-top: 25px; text-align: center">Upload XLSForm to create project</div>
+        <div class="file-uploader" class="grid" style="float:left;margin-left: 370px;width: 100%">
+            <noscript>
+                <p>{% trans "Please enable JavaScript to use file uploader." %}</p>
+            </noscript>
+            <div id="file_uploader" class="float_left grid_5"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_scss %}
+    <link href="/media/css/scss/section_new_create_project.css" rel="stylesheet"/>
+{% endblock %}

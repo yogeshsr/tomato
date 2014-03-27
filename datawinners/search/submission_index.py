@@ -6,7 +6,7 @@ from babel.dates import format_datetime
 from pyelasticsearch.exceptions import ElasticHttpError, ElasticHttpNotFoundError
 from datawinners.search.submission_index_meta_fields import submission_meta_fields
 
-from mangrove.form_model.field import DateField
+from mangrove.form_model.field import DateField, FieldSet
 from datawinners.project.models import get_all_projects
 from datawinners.search.submission_index_constants import SubmissionIndexConstants
 from datawinners.search.submission_index_helper import SubmissionIndexUpdateHandler
@@ -260,7 +260,11 @@ def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model)
             except Exception as ignore_conversion_errors:
                 pass
         if entry:
-            search_dict.update({es_field_name(lower(field.code), form_model.id): entry})
+            if type(field) is FieldSet:
+                search_dict.update({es_field_name(lower(field.code), form_model.id): str(entry)})
+            else:
+                search_dict.update({es_field_name(lower(field.code), form_model.id): entry})
+
 
     search_dict.update({'void': submission_doc.void})
     return search_dict
