@@ -1,9 +1,11 @@
 import json
+import logging
 import re
 from tempfile import NamedTemporaryFile
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
@@ -11,21 +13,22 @@ from django.views.decorators.csrf import csrf_view_exempt, csrf_response_exempt,
 from django.views.generic.base import View
 from datawinners import settings
 
-from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device
-from datawinners.accountmanagement.models import NGOUserProfile
+from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, valid_web_user
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor
+from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code, is_project_exist
 from datawinners.project.models import Project
 from datawinners.project.utils import is_quota_reached
 from datawinners.project.views.utils import get_form_context
 from datawinners.project.views.views import SurveyWebQuestionnaireRequest
-from datawinners.project.wizard_view import update_questionnaire, update_associated_submissions, \
+from datawinners.project.wizard_view import update_associated_submissions, \
     _get_deleted_question_codes
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from mangrove.form_model.form_model import FormModel
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
+logger = logging.getLogger("datawinners.blue")
 
 class ProjectUpload(View):
 
@@ -178,6 +181,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         if self.form_model.xform:
             form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self.form_model.xform).transform())})
             form_context.update({'is_advance_questionnaire': True})
+            form_context.update({'submission_create_url': reverse('new_web_submission')})
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
@@ -201,7 +205,28 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
             form_context.update({'survey_response_id': survey_response_id })
             form_context.update({'xform_xml':re.sub(r"\n", " ", XFormTransformer(self.form_model.xform).transform())})
             form_context.update({'edit_model_str': self._model_str_of(survey_response_id, self.project.name)})
+            form_context.update({'submission_update_url': reverse('update_web_submission', kwargs={'survey_response_id':survey_response_id})})
             form_context.update({'is_advance_questionnaire': True})
 
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
+
+@csrf_exempt
+def new_web_submission(request):
+    try:
+        response = XFormWebSubmissionHandler(request.user, xml_submission_file=request.POST['a']).\
+            create_new_submission_response()
+        response['Location'] = request.build_absolute_uri(request.path)
+        return response
+    except Exception as e:
+        logger.exception("Exception in submission : \n%s" % e)
+        return HttpResponseBadRequest()
+
+@csrf_exempt
+def update_web_submission(request, survey_response_id):
+    try:
+        return XFormWebSubmissionHandler(request.user, xml_submission_file=request.POST['a']).\
+            update_submission_response(survey_response_id)
+    except Exception as e:
+        logger.exception("Exception in submission : \n%s" % e)
+        return HttpResponseBadRequest()

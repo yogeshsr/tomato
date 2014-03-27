@@ -61,9 +61,7 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
             } else {
                 DW.blockUI({ message: '<h1><img src="/media/images/ajax-loader.gif"/><span class="loading">' + gettext("Just a moment") + '...</span></h1>', css: { width: '275px'}});
                 var data = form.getDataStr();
-                var saveURL= '/xforms/submission';
-                if(surveyResponseId.length > 0)
-                    saveURL+= '?survey_response_id=' + surveyResponseId;
+                var saveURL= submissionUpdateUrl || submissionCreateUrl;
 
                 console.log('save_url: ' + saveURL);
                 //console.log( 'record:', data );
