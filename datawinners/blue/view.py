@@ -4,8 +4,12 @@ import re
 from tempfile import NamedTemporaryFile
 
 from django.contrib.auth.decorators import login_required
+
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
@@ -25,7 +29,7 @@ from datawinners.project.views.views import SurveyWebQuestionnaireRequest
 from datawinners.project.wizard_view import update_associated_submissions, \
     _get_deleted_question_codes
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.form_model import FormModel
+from mangrove.form_model.form_model import FormModel, get_form_model_by_code
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
 logger = logging.getLogger("datawinners.blue")
@@ -230,3 +234,35 @@ def update_web_submission(request, survey_response_id):
     except Exception as e:
         logger.exception("Exception in submission : \n%s" % e)
         return HttpResponseBadRequest()
+
+def enable_cors(response):
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Max-Age'] = '120'
+    response['Access-Control-Allow-Credentials'] = 'true'
+    response['Access-Control-Allow-Methods'] = 'HEAD, GET, OPTIONS, POST, DELETE'
+    response['Access-Control-Allow-Headers'] = 'origin, content-type, accept, x-requested-with'
+    return response
+
+
+def get_projects(request):
+    manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+    project_list = []
+    rows = manager.load_all_rows_in_view('all_projects', descending=True, limit=8)
+    for row in rows:
+        project = dict(name=row['value']['name'], id=row['value']['_id'])
+        project_list.append(project)
+    response = HttpResponse(json.dumps(project_list), status=200, content_type='application/json')
+    enable_cors(response)
+    return response
+
+
+def get_questionnaire(request, project_id):
+    manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+    project = Project.load(manager.database, project_id)
+    if project.is_deleted():
+        return HttpResponse(json.dumps({'error':'Project is deleted'}), status=200, content_type='application/json')
+    questionnaire = FormModel.get(manager, project.qid)
+
+    response = HttpResponse(json.dumps({'transformed_xform': re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform())}), status=200, content_type='application/json')
+    enable_cors(response)
+    return response
