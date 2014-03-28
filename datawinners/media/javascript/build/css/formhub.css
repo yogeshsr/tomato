@@ -1697,8 +1697,8 @@ input[type="button"].btn-block {
 
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url("/lib/bootstrap-sass/fonts/glyphicons-halflings-regular.eot");
-  src: url("/lib/bootstrap-sass/fonts/glyphicons-halflings-regular.eot?#iefix") format("embedded-opentype"), url("/lib/bootstrap-sass/fonts/glyphicons-halflings-regular.woff") format("woff"), url("/lib/bootstrap-sass/fonts/glyphicons-halflings-regular.ttf") format("truetype"), url("/lib/bootstrap-sass/fonts/glyphicons-halflings-regular.svg#glyphicons-halflingsregular") format("svg");
+  src: url("../lib/bootstrap-sass/fonts/glyphicons-halflings-regular.eot");
+  src: url("../lib/bootstrap-sass/fonts/glyphicons-halflings-regular.eot?#iefix") format("embedded-opentype"), url("../lib/bootstrap-sass/fonts/glyphicons-halflings-regular.woff") format("woff"), url("../lib/bootstrap-sass/fonts/glyphicons-halflings-regular.ttf") format("truetype"), url("../lib/bootstrap-sass/fonts/glyphicons-halflings-regular.svg#glyphicons-halflingsregular") format("svg");
 }
 
 .glyphicon {
@@ -6184,7 +6184,7 @@ legend ~ .option-wrapper > label .active {
 }
 
 .option-wrapper input[type=radio], .option-wrapper input[type=checkbox] {
-  background: url("../../images/checkradio.png") no-repeat;
+  background: url("../../../images/enketo/checkradio.png") no-repeat;
   cursor: pointer;
   -webkit-appearance: none;
   -moz-background-position-x: -9999px -9999px !important;

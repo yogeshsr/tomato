@@ -65,6 +65,7 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
 
                 var success = function(data,status){
                     DW.unblockUI();
+                    alert('Your data has been saved successfully');
                     window.location.replace(surveyResponseId == '' ? submissionURL : submissionLogURL);
                 };
                 var error = function(status){
