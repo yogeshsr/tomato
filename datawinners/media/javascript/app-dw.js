@@ -63,22 +63,16 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
                 var data = form.getDataStr();
                 var saveURL= submissionUpdateUrl || submissionCreateUrl;
 
-                console.log('save_url: ' + saveURL);
-                //console.log( 'record:', data );
-                $.ajax({
-                    type: "POST",
-                    url: saveURL,
-                    data: {'a':data},
-                    dataType: "application/xml",
-                    statusCode: {
-                              201: function() {
-                                 //alert( 'Your data has been updated.' );
-                                 window.location.replace(surveyResponseId == '' ? submissionURL : submissionLogURL);
-                                }
-                              }
-                }).done(function(){
-                        DW.unblockUI();
-                    });
+                var success = function(data,status){
+                    DW.unblockUI();
+                    window.location.replace(surveyResponseId == '' ? submissionURL : submissionLogURL);
+                };
+                var error = function(status){
+                    alert('Unable to submit form, please try after some time');
+                    DW.unblockUI();
+                };
+
+                $.post(saveURL,{'a':data}).done(success).fail(error);
             }
         } );
 
