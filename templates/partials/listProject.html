@@ -1,0 +1,18 @@
+<div>
+	<div ng-show="projects.length" style="font-weight:bolder;font-size: larger;margin-top: 10px;margin-bottom: 10px;">List of projects in the server</div>
+	<table>
+		<tr ng-repeat="project in projects">
+        	<td>{{ project.name }}</td>
+        	<td><button ng-click="downloadForm(project)">Download forms</button></td>
+    	</tr>
+	</table>
+
+	<div style="font-weight:bolder;font-size: larger;margin-top: 10px;margin-bottom: 10px;">Questionnaire</div>
+	<table>
+		<tr ng-repeat="project in localProjects">
+        	<td>{{ project.doc.name }}</td>
+        	<td><button ng-click="submission(project)">Submission</button></td>
+        	<td><button ng-click="submissionLog(project)">Submission Log</button></td>
+    	</tr>	
+	</table>
+</div>
