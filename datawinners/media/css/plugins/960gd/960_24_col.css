@@ -123,6 +123,7 @@ body {
 }
 
 .container_24 .grid_7 {
+  visibility: hidden;
   width: 270px;
 }
 
@@ -135,6 +136,7 @@ body {
 }
 
 .container_24 .grid_10 {
+  visibility: hidden;
   width: 390px;
 }
 
@@ -151,6 +153,7 @@ body {
 }
 
 .container_24 .grid_14 {
+  visibility: hidden;
   width: 550px;
 }
 
@@ -176,6 +179,7 @@ body {
 
 .container_24 .grid_20 {
   width: 790px;
+  visibility: hidden;
 }
 
 .container_24 .grid_21 {

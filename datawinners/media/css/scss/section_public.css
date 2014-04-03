@@ -105,7 +105,8 @@ body {
   overflow: hidden; }
   #container_home_carousel #home_carousel {
     position: relative;
-    width: 960px; }
+    width: 960px;
+    visibility: hidden;}
     #container_home_carousel #home_carousel #carousel_title {
       margin: 30px 0 15px 0;
       background: url("/media/images/dw_title_slide_bg.png") no-repeat left 15px; }
@@ -230,6 +231,7 @@ body {
     #container_home_how #home_how a {
       color: #043E6A; }
     #container_home_how #home_how div {
+      visibility: hidden;
       color: #333333; }
       #container_home_how #home_how div p {
         margin: 0 0 0 10px; }
@@ -811,3 +813,7 @@ ol .lower_i {
           margin: 0; }
           .carousel_title .pagin ul li a:hover, .carousel_title .pagin ul li a.on {
             margin-top: -16px; }
+
+#footer{
+    visibility: hidden;
+}
