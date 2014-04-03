@@ -2,6 +2,7 @@ import os
 import tempfile
 import unittest
 from django_digest.test import Client as DigestClient
+from nose.plugins.attrib import attr
 from datawinners.blue.xform_bridge import XFormSubmissionProcessor
 from mangrove.form_model.field import TextField, FieldSet, DateField, IntegerField, SelectField, GeoCodeField
 
@@ -103,6 +104,7 @@ class TestXFromClientSubmission(unittest.TestCase):
                                              {'centername': 'Weene', 'area': 'Bgh'}], 'eid': 'rep276'}
         return form_fields, survey_response_values
 
+    @attr('dcs')
     def test_should_create_xform_model_str(self):
         form_fields, survey_response_values = self.create_test_fields_and_survey()
         submissionProcessor = XFormSubmissionProcessor()

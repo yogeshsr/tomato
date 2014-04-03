@@ -1,10 +1,12 @@
 from collections import OrderedDict
 import unittest
+from nose.plugins.attrib import attr
 from datawinners.blue.xform_submission_exporter import AdvanceSubmissionFormatter
 
 
 class TestXFormSubmissionExporter(unittest.TestCase):
 
+    @attr('dcs')
     def test_should_tabulate_header_and_submissions_rows(self):
         family_dict = OrderedDict({'name': {'type': 'text', 'label': 'Name'}})
         family_dict.update({'age': {'type': 'text', 'label': 'Age'}})
