@@ -23,9 +23,11 @@ from datawinners.search import *
 class XlsFormParser():
     type_dict = {'repeat': ['repeat'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate'],
-                 'select': ['select one', 'select all that apply']
+                 'select': ['select one', 'select all that apply'],
+                 'upgroup': ['group']
                  }
     supported_type = list(itertools.chain(*type_dict.values()))
+
 
     def __init__(self, path_or_file, project_name='Project'):
         if isinstance(path_or_file, basestring):
@@ -39,18 +41,32 @@ class XlsFormParser():
         survey = create_survey_element_from_dict(self.xform_dict)
         self.xform = survey.to_xml()
 
-    def _create_question(self, c):
+    def _create_question(self, field):
         question = None
-        if c['type'] in self.type_dict['repeat']:
-            question = self._repeat(c)
-        elif c['type'] in self.type_dict['field']:
-            question = self._field(c)
-        elif c['type'] in self.type_dict['select']:
-            question = self._select(c)
+        if field['type'] in self.type_dict['repeat']:
+            question = self._repeat(field)
+        elif field['type'] in self.type_dict['field']:
+            question = self._field(field)
+        elif field['type'] in self.type_dict['select']:
+            question = self._select(field)
         return question
 
+    def _create_ungrouped_questions(self, group_info):
+        return [self._create_question(c) for c in group_info['children'] if c['type'] in self.supported_type]
+
+    def _create_questions(self, fields):
+        questions = []
+        for field in fields:
+            if field.get('control') or field.get('type') not in self.supported_type:
+                continue
+            if field['type'] in self.type_dict['upgroup']:
+                questions.extend(self._create_questions(field['children']))
+            elif field['type'] in self.supported_type:
+                questions.append(self._create_question(field))
+        return questions
+
     def parse(self):
-        questions = [self._create_question(c) for c in self.xform_dict['children'] if c['type'] in self.supported_type]
+        questions = self._create_questions(self.xform_dict['children'])
         return self.xform, questions
 
     def _repeat(self, repeat):
@@ -58,8 +74,7 @@ class XlsFormParser():
         if not group_label: #todo create appropriate error class
             raise QuestionAlreadyExistsException('Unique repeat label is required')
         group_name = repeat['name']
-        children = repeat['children']
-        questions = [self._create_question(c) for c in children if c['type'] in self.supported_type]
+        questions = self._create_questions(repeat['children'])
         question = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
                  "code": group_name, "name": group_label, 'required': False,
                  "instruction": "No answer required",
@@ -85,7 +100,7 @@ class XlsFormParser():
         name = field['label']
         code = field['name']
         question = {"title": name, "code": code, "type": "select", 'required': self.is_required(field),
-                 "choices": [{'value':{'text':f['label'], 'val':f['name']}} for f in field['choices']], "is_entity_question": False}
+                 "choices": [{'value':{'text':f.get('label') or f['name'], 'val':f['name']}} for f in field['choices']], "is_entity_question": False}
         if field['type'] == 'select one':
             question.update({"type": "select1"})
         return question
