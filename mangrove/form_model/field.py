@@ -466,14 +466,21 @@ class ShortCodeField(TextField):
         return super(ShortCodeField, self).validate(value)
 
 class FieldSet(Field):
+    ENTITY_FLAG = 'entity_flag'
     def __init__(self, name, code, label, constraints=None, defaultValue="", instruction=None,
-                 entity_question_flag=False, required=True, field_set=[]):
+                 entity_question_flag=False, required=True, field_set=[], entity_flag=False):
         Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
                        label=label, instruction=instruction, required=required)
         self.fields = self._dict['fields'] = field_set
+        if entity_flag:
+            self._dict[self.ENTITY_FLAG] = entity_flag
 
     def is_field_set(self):
         return True
+
+    @property
+    def is_entity(self):
+        return self._dict.get(self.ENTITY_FLAG)
 
     def validate(self, value):
         # todo call all validators of the child fields
