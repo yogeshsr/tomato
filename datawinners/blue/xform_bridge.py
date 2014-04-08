@@ -71,13 +71,14 @@ class XlsFormParser():
 
     def _repeat(self, repeat):
         group_label = repeat['label']
+        is_entity = repeat.has_key('bind') and repeat['bind'].has_key('constraint') and repeat['bind']['constraint'] == 'entity'
         if not group_label: #todo create appropriate error class
             raise QuestionAlreadyExistsException('Unique repeat label is required')
         group_name = repeat['name']
         questions = self._create_questions(repeat['children'])
         question = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
                  "code": group_name, "name": group_label, 'required': False,
-                 "instruction": "No answer required",
+                 "instruction": "No answer required", 'is_entity': is_entity,
                  'fields':questions}
         return question
 

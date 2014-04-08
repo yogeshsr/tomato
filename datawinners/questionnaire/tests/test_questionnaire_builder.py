@@ -8,7 +8,7 @@ from mangrove.bootstrap import initializer
 from mangrove.datastore.database import DatabaseManager, get_db_manager, _delete_db_and_remove_db_manager
 from mangrove.datastore.entity_type import define_type
 from mangrove.errors.MangroveException import EntityTypeAlreadyDefined
-from mangrove.form_model.field import TextField, IntegerField, SelectField, GeoCodeField, TelephoneNumberField
+from mangrove.form_model.field import TextField, IntegerField, SelectField, GeoCodeField, TelephoneNumberField, FieldSet
 from mangrove.form_model.form_model import FormModel, LOCATION_TYPE_FIELD_NAME, get_form_model_by_code
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder, QuestionBuilder
 from mangrove.form_model.validation import TextLengthConstraint, RegexConstraint, NumericRangeConstraint
@@ -76,15 +76,22 @@ class TestQuestionnaireBuilder(unittest.TestCase):
                 {"title": "q2", "type": "integer", "choices": [], "is_entity_question": False, "code": "code",
                  "range_min": 0, "range_max": 100},
                 {"title": "q3", "type": "select", "code": "code", "choices": [{"value": {"val": "c1"}}, {"value": {"val": "c2"}}],
-                 "is_entity_question": False}
+                 "is_entity_question": False},
+                {"title": "q4", "type": "field_set", "code": "q4", "is_entity_question": False, "is_entity": True,
+                 "fields": []},
+                {"title": "q5", "type": "field_set", "code": "q5", "is_entity_question": False, "is_entity": False,
+                 "fields": []}
         ]
         summary_form_model = self.manager.get(self.summary_form_model__id, FormModel)
         QuestionnaireBuilder(summary_form_model, self.manager).update_questionnaire_with_questions(post)
-        self.assertEqual(4, len(summary_form_model.fields))
+        self.assertEqual(6, len(summary_form_model.fields))
         self.assertEqual('eid', summary_form_model.fields[0].code)
         self.assertEqual('q1', summary_form_model.fields[1].code)
         self.assertEqual('q2', summary_form_model.fields[2].code)
         self.assertEqual('q3', summary_form_model.fields[3].code)
+        self.assertEqual('q4', summary_form_model.fields[4].code)
+        self.assertEqual(True, summary_form_model.fields[4].is_entity)
+        self.assertEqual(None, summary_form_model.fields[5].is_entity)
         entity_id_question = summary_form_model.entity_question
         self.assertEqual('eid', entity_id_question.code)
         self.assertEqual('I am submitting this data on behalf of', entity_id_question.name)
@@ -148,23 +155,33 @@ class TestQuestionBuilder(unittest.TestCase):
                 {"title": "q4", "description": "desc4", "type": "select1",
                  "choices": [{"value": {"text": "value", "val": "c1"}}, {"value": {"text": "value", "val": "c2"}}],
                  "is_entity_question": False},
-                {"title": "q5", "description": "desc4", "type": "text"}
+                {"title": "q5", "description": "desc4", "type": "text"},
+                {"title": "q6", "description": "desc6", "type": "field_set", "fields": []},
+                {"title": "q7", "description": "desc7", "type": "field_set", "is_entity": True, "fields":[]}
         ]
         q1 = self.question_builder.create_question(post[0], "q1")
         q2 = self.question_builder.create_question(post[1], "q1")
         q3 = self.question_builder.create_question(post[2], "q1")
         q4 = self.question_builder.create_question(post[3], "q1")
         q5 = self.question_builder.create_question(post[4], "q1")
+        q6 = self.question_builder.create_question(post[5], "q1")
+        q7 = self.question_builder.create_question(post[6], "q1")
         self.assertIsInstance(q1, TextField)
         self.assertIsInstance(q2, IntegerField)
         self.assertIsInstance(q3, SelectField)
         self.assertIsInstance(q4, SelectField)
         self.assertIsInstance(q5, TextField)
+        self.assertIsInstance(q6, FieldSet)
+        self.assertIsInstance(q7, FieldSet)
         self.assertEquals(q1._to_json_view()["length"], {"min": 1, "max": 15})
         self.assertEquals(q2._to_json_view()["range"], {"min": 0, "max": 100})
         self.assertEquals(q3._to_json_view()["type"], "select")
         self.assertEquals(q4._to_json_view()["type"], "select1")
         self.assertEquals(q5._to_json_view()["type"], "text")
+        self.assertEquals(q6._to_json_view()["type"], "field_set")
+        self.assertEquals(q6.is_entity, None)
+        self.assertEquals(q7._to_json_view()["type"], "field_set")
+        self.assertEquals(q7.is_entity, True)
 
     def test_should_populate_name_as_title_if_name_is_not_present(self):
         post = {"title": "q2", "type": "text"}
