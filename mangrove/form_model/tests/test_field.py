@@ -6,7 +6,8 @@ from mock import Mock
 
 from mangrove.datastore.database import DatabaseManager
 from mangrove.errors.MangroveException import IncorrectDate, GeoCodeFormatException, RegexMismatchException, RequiredFieldNotPresentException
-from mangrove.form_model.field import DateField, GeoCodeField, field_to_json, HierarchyField, TelephoneNumberField, Field, ShortCodeField
+from mangrove.form_model.field import DateField, GeoCodeField, field_to_json, HierarchyField, TelephoneNumberField, Field, ShortCodeField,
+    FieldSet
 from mangrove.errors.MangroveException import AnswerTooBigException, AnswerTooSmallException, \
     AnswerTooLongException, AnswerTooShortException, AnswerWrongType, AnswerHasTooManyValuesException
 from mangrove.form_model.field import TextField, IntegerField, SelectField, ExcelDate, UniqueIdField
@@ -595,6 +596,18 @@ class TestField(unittest.TestCase):
         field = TextField(name="test", code='MC', label='question', constraints=constraints)
 
         self.assertEqual(constraints, field.constraints)
+
+    def test_should_create_field_set_which_is_an_entity(self):
+        fieldset = FieldSet(name="test", code='q1', label='question',entity_flag=True)
+        expected_json = {'required': True, 'name': 'test', 'fields': [], 'instruction': None, 'label': 'question',
+                         'code': 'q1', 'entity_flag': True, 'type': 'field_set'}
+        self.assertEquals(expected_json, field_to_json(fieldset))
+
+    def test_should_create_field_set_which_is_not_an_entity(self):
+        fieldset = FieldSet(name="test", code='q1', label='question', entity_flag=False)
+        expected_json = {'code': 'q1', 'required': True, 'name': 'test', 'fields': [], 'instruction': None,
+                         'type': 'field_set', 'label': 'question'}
+        self.assertEquals(expected_json, field_to_json(fieldset))
 
     def test_should_validate_text_data_based_on_list_of_constraints(self):
         length_constraint = TextLengthConstraint(min=10, max=12)
