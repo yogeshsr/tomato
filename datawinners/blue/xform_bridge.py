@@ -65,7 +65,16 @@ class XlsFormParser():
                 questions.append(self._create_question(field))
         return questions
 
+    def _validate_supported_field(self, fields):
+        for field in fields:
+            if field['type'] in self.supported_type:
+                if field['type'] in self.type_dict['upgroup']:
+                    return self._validate_supported_field(field['children'])
+            else:
+                raise TypeNotSupportedException("question type '" + field['type'] + "' is not supported")
+
     def parse(self):
+        self._validate_supported_field(self.xform_dict['children'])
         questions = self._create_questions(self.xform_dict['children'])
         return self.xform, questions
 
@@ -236,3 +245,11 @@ class XFormTransformer():
         r = model_tree.getroot()
         r.extend(form_tree.getroot())
         return etree.tostring(r)
+
+class TypeNotSupportedException(Exception):
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message

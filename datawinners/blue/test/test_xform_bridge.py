@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.test import Client
 from nose.plugins.attrib import attr
 
-from datawinners.blue.xform_bridge import MangroveService, XlsFormParser
+from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, TypeNotSupportedException
 from mangrove.form_model.field import FieldSet
 from mangrove.form_model.form_model import get_form_model_by_code
 
@@ -18,6 +18,8 @@ class TestXFormBridge(unittest.TestCase):
 
     def setUp(self):
         self.test_data = os.path.join(DIR, 'testdata')
+        self.UNSUPPORTED_FIELDS = os.path.join(self.test_data,'unsupported_field.xls')
+        self.INVALID_FIELDS = os.path.join(self.test_data,'invalid_field.xls')
         self.ALL_FIELDS = os.path.join(self.test_data,'all_fields.xls')
         self.SIMPLE = os.path.join(self.test_data,'text_and_integer.xls')
         self.REQUIRED = os.path.join(self.test_data,'required_sample.xls')
@@ -27,6 +29,22 @@ class TestXFormBridge(unittest.TestCase):
         self.MANY_FIELD = os.path.join(self.test_data,'many-fields.xls')
         self.NAME_SPACE = os.path.join(self.test_data,'xpath-sample.xml')
         self.user = User.objects.get(username="tester150411@gmail.com")
+
+    @attr('dcs')
+    def test_should_throw_error_for_unsupported_valid_field_type(self):
+        with self.assertRaises(TypeNotSupportedException):
+            XlsFormParser(self.UNSUPPORTED_FIELDS).parse()
+
+    @attr('dcs')
+    def test_should_not_throw_error_for_unsupported_valid_field_type(self):
+        with self.assertRaises(TypeNotSupportedException):
+            XlsFormParser(self.ALL_FIELDS).parse()
+
+    @attr('dcs')
+    def test_should_throw_error_for_invalid_field_type(self):
+        with self.assertRaises(Exception):
+            XlsFormParser(self.INVALID_FIELDS).parse()
+
 
     @attr('dcs')
     def test_should_create_project_using_xlsform_file(self):
