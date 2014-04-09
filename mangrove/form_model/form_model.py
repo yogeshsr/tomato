@@ -6,7 +6,7 @@ from mangrove.datastore.database import DatabaseManager, DataObject
 from mangrove.datastore.documents import FormModelDocument, attributes, EntityFormModelDocument
 from mangrove.errors.MangroveException import FormModelDoesNotExistsException, QuestionCodeAlreadyExistsException, \
     EntityQuestionAlreadyExistsException, DataObjectAlreadyExists, QuestionAlreadyExistsException, NoDocumentError
-from mangrove.form_model.field import TextField, UniqueIdField, ShortCodeField
+from mangrove.form_model.field import TextField, UniqueIdField, ShortCodeField, FieldSet
 from mangrove.form_model.validators import MandatoryValidator
 from mangrove.utils.types import is_sequence, is_string, is_empty, is_not_empty
 from mangrove.form_model import field
