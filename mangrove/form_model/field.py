@@ -52,10 +52,10 @@ def _get_field_set_field(code, dictionary, is_entity_question, label, name, inst
         constraints = constraints_factory(constraints_json)
 
     sub_fields = dictionary.get("fields")
+    fieldSet_type = dictionary.get("fieldSet_type")
     repeat_question_fields = [create_question_from(f, dbm) for f in sub_fields]
-    field = FieldSet(name=name, code=code, label=label, entity_question_flag=is_entity_question,
-                      constraints=constraints, instruction=instruction, required=required,
-                      field_set=repeat_question_fields)
+    field = FieldSet(name=name, code=code, label=label, instruction=instruction, required=required,
+                      field_set=repeat_question_fields, fieldSet_type=fieldSet_type)
     return field
 
 def _get_text_field(code, dictionary, is_entity_question, label, name, instruction, required):
@@ -466,21 +466,23 @@ class ShortCodeField(TextField):
         return super(ShortCodeField, self).validate(value)
 
 class FieldSet(Field):
-    ENTITY_FLAG = 'entity_flag'
-    def __init__(self, name, code, label, constraints=None, defaultValue="", instruction=None,
-                 entity_question_flag=False, required=True, field_set=[], entity_flag=False):
+    FIELDSET_TYPE = 'fieldSet_type'
+
+    def __init__(self, name, code, label, instruction=None, required=True, field_set=[], fieldSet_type='entity'):
         Field.__init__(self, type=field_attributes.FIELD_SET, name=name, code=code,
                        label=label, instruction=instruction, required=required)
         self.fields = self._dict['fields'] = field_set
-        if entity_flag:
-            self._dict[self.ENTITY_FLAG] = entity_flag
+        self._dict[self.FIELDSET_TYPE] = fieldSet_type
 
     def is_field_set(self):
         return True
 
+    def is_group(self):
+        return self._dict.get(self.FIELDSET_TYPE) == 'group'
+
     @property
-    def is_entity(self):
-        return self._dict.get(self.ENTITY_FLAG)
+    def fieldset_type(self):
+        return self._dict.get(self.FIELDSET_TYPE)
 
     def validate(self, value):
         # todo call all validators of the child fields

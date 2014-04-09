@@ -7,7 +7,7 @@ from mangrove.datastore.database import DatabaseManager, DataObject
 from mangrove.datastore.documents import FormModelDocument, attributes
 from mangrove.errors.MangroveException import FormModelDoesNotExistsException, QuestionCodeAlreadyExistsException, \
     EntityQuestionAlreadyExistsException, DataObjectAlreadyExists, QuestionAlreadyExistsException
-from mangrove.form_model.field import TextField
+from mangrove.form_model.field import TextField, FieldSet
 from mangrove.form_model.validators import MandatoryValidator
 from mangrove.utils.types import is_sequence, is_string, is_empty, is_not_empty
 from mangrove.form_model import field
@@ -75,12 +75,18 @@ def get_form_model_cache_key(form_code, dbm):
         assert form_code is not None
         return str("%s_%s" % (dbm.database.name, form_code))
 
-def header_fields(form_model, key_attribute="name", ref_header_dict=None):
-    header_dict = ref_header_dict or OrderedDict()
-    for field in form_model.fields:
+def _header_fields(fields, key_attribute, header_dict):
+    for field in fields:
+        if isinstance(field, FieldSet) and field.is_group():
+            _header_fields(field.fields, key_attribute, header_dict)
+            continue
         key = field.__getattribute__(key_attribute) if type(key_attribute) == str else key_attribute(field)
         if not header_dict.get(key):
             header_dict.update({key: field.label})
+
+def header_fields(form_model, key_attribute="name", ref_header_dict=None):
+    header_dict = ref_header_dict or OrderedDict()
+    _header_fields(form_model.fields, key_attribute, header_dict)
     return header_dict
 
 def get_field_by_attribute_value(form_model, key_attribute,attribute_label):
