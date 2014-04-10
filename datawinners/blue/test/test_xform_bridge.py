@@ -20,6 +20,7 @@ class TestXFormBridge(unittest.TestCase):
         self.test_data = os.path.join(DIR, 'testdata')
         self.UNSUPPORTED_FIELDS = os.path.join(self.test_data,'unsupported_field.xls')
         self.INVALID_FIELDS = os.path.join(self.test_data,'invalid_field.xls')
+        self.CASCADE = os.path.join(self.test_data,'cascade.xls')
         self.ALL_FIELDS = os.path.join(self.test_data,'all_fields.xls')
         self.SIMPLE = os.path.join(self.test_data,'text_and_integer.xls')
         self.REQUIRED = os.path.join(self.test_data,'required_sample.xls')
@@ -40,6 +41,21 @@ class TestXFormBridge(unittest.TestCase):
         with self.assertRaises(Exception):
             XlsFormParser(self.INVALID_FIELDS).parse()
 
+    @attr('dcs')
+    def test_should_convert_cascaded_select_field(self):
+        xform, json_xform_data = XlsFormParser(self.CASCADE).parse()
+        expected_json = [{'code': 'name', 'name': 'What is your name?', 'title': 'What is your name?', 'required': False,
+          'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+         {'code': 'respondent_district_counties', 'title': 'Please select the county', 'required': False,
+          'choices': [{'value': {'text': 'Bomi', 'val': 'bomi'}},
+                      {'value': {'text': 'Grand Bassa', 'val': 'grand_bassa'}}], 'is_entity_question': False,
+          'type': 'select1'},
+         {'code': 'respondent_district', 'title': 'Please select the district', 'required': False,
+          'choices': [{'value': {'text': 'Klay', 'val': 'klay'}},
+                      {'value': {'text': 'Commonwealth 1', 'val': 'commonwealth_1'}}], 'is_entity_question': False,
+          'type': 'select1'}]
+
+        self.assertEqual(expected_json, json_xform_data)
 
     @attr('dcs')
     def test_should_create_project_using_xlsform_file(self):

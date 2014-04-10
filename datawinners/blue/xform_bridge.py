@@ -22,7 +22,7 @@ from datawinners.search import *
 
 class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
-                 'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate'],
+                 'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate', 'cascading_select'],
                   'auto_filled':['start','end','today', 'deviceid','subscriberid','imei','phonenumber'],
                  'select': ['select one', 'select all that apply']
                  }
@@ -116,8 +116,12 @@ class XlsFormParser():
     def _select(self, field):
         name = field['label']
         code = field['name']
+        if field.get('choices'):
+            choices = [{'value':{'text':f.get('label') or f['name'], 'val':f['name']}} for f in field.get('choices')]
+        else:
+            choices = [{'value':{'text':f.get('label') or f['name'], 'val':f['name']}} for f in self.xform_dict['choices'].get(field['itemset'])]
         question = {"title": name, "code": code, "type": "select", 'required': self.is_required(field),
-                 "choices": [{'value':{'text':f.get('label') or f['name'], 'val':f['name']}} for f in field['choices']], "is_entity_question": False}
+                 "choices": choices, "is_entity_question": False}
         if field['type'] == 'select one':
             question.update({"type": "select1"})
         return question
@@ -135,7 +139,7 @@ class MangroveService():
         self.manager = get_database_manager(self.user)
         self.entity_type = ['reporter']
         self.questionnaire_code =  questionnaire_code if questionnaire_code else generate_questionnaire_code(self.manager)
-        self.name = 'Xlsform Project-' + self.questionnaire_code if not project_name else project_name
+        self.name = 'Xlsform-Project-' + self.questionnaire_code if not project_name else project_name
         self.language = 'en'
         self.xform = xform_as_string
         self.xform_with_form_code = self._update_xform(xform_as_string, self.questionnaire_code, user_profile.reporter_id)
