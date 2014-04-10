@@ -21,10 +21,9 @@ from mangrove.form_model.form_model import FormModel
 from datawinners.search import *
 
 class XlsFormParser():
-    type_dict = {'repeat': ['repeat'],
+    type_dict = {'group': ['repeat', 'group'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate'],
-                 'select': ['select one', 'select all that apply'],
-                 'upgroup': ['group']
+                 'select': ['select one', 'select all that apply']
                  }
     supported_type = list(itertools.chain(*type_dict.values()))
 
@@ -43,8 +42,8 @@ class XlsFormParser():
 
     def _create_question(self, field):
         question = None
-        if field['type'] in self.type_dict['repeat']:
-            question = self._repeat(field)
+        if field['type'] in self.type_dict['group']:
+            question = self._group(field)
         elif field['type'] in self.type_dict['field']:
             question = self._field(field)
         elif field['type'] in self.type_dict['select']:
@@ -59,16 +58,14 @@ class XlsFormParser():
         for field in fields:
             if field.get('control') or field.get('type') not in self.supported_type:
                 continue
-            if field['type'] in self.type_dict['upgroup']:
-                questions.extend(self._create_questions(field['children']))
-            elif field['type'] in self.supported_type:
+            if field['type'] in self.supported_type:
                 questions.append(self._create_question(field))
         return questions
 
     def _validate_supported_field(self, fields):
         for field in fields:
             if field['type'] in self.supported_type:
-                if field['type'] in self.type_dict['upgroup']:
+                if field['type'] in self.type_dict['group']:
                     return self._validate_supported_field(field['children'])
             else:
                 raise TypeNotSupportedException("question type '" + field['type'] + "' is not supported")
@@ -78,16 +75,23 @@ class XlsFormParser():
         questions = self._create_questions(self.xform_dict['children'])
         return self.xform, questions
 
-    def _repeat(self, repeat):
-        group_label = repeat['label']
-        is_entity = repeat.has_key('bind') and repeat['bind'].has_key('constraint') and repeat['bind']['constraint'] == 'entity'
+    def _group(self, field):
+        group_label = field['label']
+
+        fieldSet_type = 'entity'
+
+        if field['type'] == 'repeat':
+            fieldSet_type = 'repeat'
+        elif field['type'] == 'group':
+            fieldSet_type = 'group'
+
         if not group_label: #todo create appropriate error class
             raise QuestionAlreadyExistsException('Unique repeat label is required')
-        group_name = repeat['name']
-        questions = self._create_questions(repeat['children'])
+        name = field['name']
+        questions = self._create_questions(field['children'])
         question = {'title': group_label, 'type': 'field_set', "is_entity_question": False,
-                 "code": group_name, "name": group_label, 'required': False,
-                 "instruction": "No answer required", 'is_entity': is_entity,
+                 "code": name, "name": group_label, 'required': False,
+                 "instruction": "No answer required","fieldSet_type": fieldSet_type,
                  'fields':questions}
         return question
 

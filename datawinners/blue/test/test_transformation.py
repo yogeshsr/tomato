@@ -3,6 +3,7 @@ import os
 import unittest
 
 from lxml import etree
+from nose.plugins.attrib import attr
 
 from datawinners.blue.xform_bridge import XFormTransformer
 
@@ -18,6 +19,7 @@ class TestTransformations(unittest.TestCase):
         self.HTML_FORM = os.path.join(self.xls_folder, 'openrosa2html5form_php5.xsl')
         self.XML_MODEL = os.path.join(self.xls_folder, 'openrosa2xmlmodel.xsl')
 
+    @attr('dcs')
     def test_transformation(self):
         transformed_xml = XFormTransformer(open(self.REPEAT_XFORM, 'r').read()).transform()
         expected_transformed_xml = open(os.path.join(self.test_data, 'xform_transformed.xml'), 'r').read()

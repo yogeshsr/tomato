@@ -84,12 +84,18 @@ class SubmissionSearchStore():
             pass
         return mapping_old
 
+    def _get_submission_fields(self, fields_definition, fields):
+        for field in fields:
+            if isinstance(field, FieldSet) and field.is_group():
+                self._get_submission_fields(fields_definition, field.fields)
+                continue
+            fields_definition.append(
+                get_field_definition(field, field_name=es_field_name(field.code, self.form_model.id)))
+
     def get_mappings(self):
         fields_definition = []
         fields_definition.extend(get_submission_meta_fields())
-        for field in self.form_model.fields:
-            fields_definition.append(
-                get_field_definition(field, field_name=es_field_name(field.code, self.form_model.id)))
+        self._get_submission_fields(fields_definition, self.form_model.fields)
         mapping = self.get_fields_mapping_by_field_def(doc_type=self.form_model.id, fields_definition=fields_definition)
         return mapping
 
@@ -227,12 +233,10 @@ def _update_select_field_by_revision(field, form_model, submission_doc):
     return field_by_revision if field_by_revision else field
 
 
-def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model):
-    #Submission value may have capitalized keys in some cases. This conversion is to do
-    #case insensitive lookup.
-    submission_values = OrderedDict((k.lower(), v) for k,v in submission_doc.values.iteritems())
-    for field in form_model.fields:
-        entry = submission_values.get(lower(field.code))
+def _update_search_dict(dbm, form_model, fields, search_dict, submission_doc, submission_values):
+    for field in fields:
+        field_code = field.code.lower()
+        entry = submission_values.get(field_code)
         if field.is_entity_field:
             entity_name = lookup_entity_name(dbm, entry, form_model.entity_type)
             entry_code = UNKNOWN if entity_name == UNKNOWN else entry
@@ -255,19 +259,31 @@ def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model)
                 if form_model.revision != submission_doc.form_model_revision:
                     old_submission_value = entry
                     to_format = field.date_format
-                    current_format = form_model.get_field_by_code_and_rev(field.code, submission_doc.form_model_revision).__date__(entry)
+                    current_format = form_model.get_field_by_code_and_rev(field_code,
+                                                                          submission_doc.form_model_revision).__date__(
+                        entry)
                     entry = current_format.strftime(DateField.DATE_DICTIONARY.get(to_format))
                     logger.info("Converting old date submission from %s to %s" % (old_submission_value, entry))
             except Exception as ignore_conversion_errors:
                 pass
         if entry:
-            if type(field) is FieldSet:
-                search_dict.update({es_field_name(lower(field.code), form_model.id): json.dumps(entry)})
+            if isinstance(field, FieldSet):
+                if field.is_group():
+                    for value in submission_values[field_code]:
+                        _update_search_dict(dbm,form_model, field.fields, search_dict, submission_doc, value)
+                    continue
+                search_dict.update({es_field_name(lower(field_code), form_model.id): json.dumps(entry)})
             else:
-                search_dict.update({es_field_name(lower(field.code), form_model.id): entry})
+                search_dict.update({es_field_name(lower(field_code), form_model.id): entry})
 
 
+def _update_with_form_model_fields(dbm, submission_doc, search_dict, form_model):
+    #Submission value may have capitalized keys in some cases. This conversion is to do
+    #case insensitive lookup.
+    submission_values = OrderedDict((k.lower(), v) for k,v in submission_doc.values.iteritems())
+    _update_search_dict(dbm, form_model, form_model.fields, search_dict, submission_doc, submission_values)
     search_dict.update({'void': submission_doc.void})
+
     return search_dict
 
 

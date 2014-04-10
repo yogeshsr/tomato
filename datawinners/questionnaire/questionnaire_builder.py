@@ -69,8 +69,8 @@ class QuestionBuilder( object ):
         fields = post_dict.get( "fields" )
         sub_form_fields = [self.create_question(f, f['code']) for i,f in enumerate(fields)]
         return FieldSet( name=self._get_name( post_dict ), code=code, label=post_dict["title"],
-                          entity_question_flag=post_dict.get( "is_entity_question" ), constraints=[],
-                          instruction=post_dict.get( "instruction" ), required=post_dict.get( "required"), field_set=sub_form_fields, entity_flag=post_dict.get('is_entity'))
+                          instruction=post_dict.get( "instruction" ), required=post_dict.get( "required"), field_set=sub_form_fields,
+                          fieldSet_type=post_dict.get("fieldSet_type"))
 
     def create_entity_id_question_for_activity_report(self):
         entity_id_code = "eid"

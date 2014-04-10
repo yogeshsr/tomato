@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime
 import json
 from django.http import HttpResponse
@@ -42,11 +43,13 @@ class AdvanceSubmissionFormatter():
 
     def format_tabular_data(self, values):
 
-        headers, repeat_headers = self._format_tabular_data(self.columns, {})
+        repeat_headers = OrderedDict()
+        repeat_headers.update({'main': ''})
+        headers = self._format_tabular_data(self.columns, repeat_headers)
 
         formatted_values, formatted_repeats = [], {}
         for i, row in enumerate(values):
-            result, _formatted_repeats = self._format_row(row, i, formatted_repeats)
+            result = self._format_row(row, i, formatted_repeats)
             result.append(i+1)
             formatted_values.append(result)
 
@@ -65,12 +68,12 @@ class AdvanceSubmissionFormatter():
                 headers.append(col_def['label'] + " Latitude")
                 headers.append(col_def['label'] + " Longitude")
             elif col_def.get('type', '') == FIELD_SET:
-                _repeat, dummy = self._format_tabular_data(col_def['fields'], repeat)
+                _repeat = self._format_tabular_data(col_def['fields'], repeat)
                 self.append_relating_columns(_repeat)
                 repeat.update({self._get_repeat_col_name(col_def['label']): _repeat})
             else:
                 headers.append(col_def['label'])
-        return headers, repeat
+        return headers
 
     def _format_row(self, row, i, formatted_repeats):
         return self.__format_row(row, self.columns, i, formatted_repeats)
@@ -87,7 +90,7 @@ class AdvanceSubmissionFormatter():
             try:
                 parsed_value= ""
                 if row.get(field_code):
-                    parsed_value = ', '.join(str(row.get(field_code))) if isinstance(row.get(field_code),list) else row.get(field_code)
+                    parsed_value = ', '.join(row.get(field_code)) if isinstance(row.get(field_code),list) else row.get(field_code)
 
                 if columns[field_code].get("type") == "date" or field_code == "date":
                     date_format = columns[field_code].get("format")
@@ -108,14 +111,14 @@ class AdvanceSubmissionFormatter():
                     result.append(col_val_parsed)
                 elif columns[field_code].get("type") == 'field_set':
                     _repeat_row = []
-                    a = json.loads(row.get(field_code))
-                    for row_ in a:
-                        for k,v in row_.items():
-                            if isinstance(v, list):
-                                row_[k] = json.dumps(v)
+                    data_node = json.loads(row.get(field_code))
+                    for row_ in data_node:
+                        for question_code,data_value in row_.items():
+                            if isinstance(data_value, list):
+                                row_[question_code] = json.dumps(data_value)
 
-                    for i, f in enumerate(a):
-                        _result, _repeat = self.__format_row(f, columns[field_code].get('fields'), index, repeat)
+                    for value in data_node:
+                        _result = self.__format_row(value, columns[field_code].get('fields'), index, repeat)
                         _repeat_row.append(_result)
                         _result.append('')
                         _result.append(index+1)
@@ -127,7 +130,7 @@ class AdvanceSubmissionFormatter():
                 col_val = row.get(field_code) or ""
                 result.extend(col_val)
 
-        return result, repeat
+        return result
 
     def _split_gps(self, value):
         if not value:

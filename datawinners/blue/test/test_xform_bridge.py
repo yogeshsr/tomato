@@ -36,11 +36,6 @@ class TestXFormBridge(unittest.TestCase):
             XlsFormParser(self.UNSUPPORTED_FIELDS).parse()
 
     @attr('dcs')
-    def test_should_not_throw_error_for_unsupported_valid_field_type(self):
-        with self.assertRaises(TypeNotSupportedException):
-            XlsFormParser(self.ALL_FIELDS).parse()
-
-    @attr('dcs')
     def test_should_throw_error_for_invalid_field_type(self):
         with self.assertRaises(Exception):
             XlsFormParser(self.INVALID_FIELDS).parse()
@@ -88,19 +83,32 @@ class TestXFormBridge(unittest.TestCase):
 
         expected_json = \
             [{'code': 'name', 'name': 'What is your name?', 'title': 'What is your name?', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+                # repeat
              {'code': 'education', 'instruction': 'No answer required', 'name': 'Education', 'title': 'Education',
                 'fields': [{'code': 'degree', 'name': 'Degree name', 'title': 'Degree name', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
                          {'code': 'completed_on', 'date_format': 'dd.mm.yyyy', 'name': 'Degree completion year', 'title': 'Degree completion year', 'required': True, 'is_entity_question': False, 'instruction': 'Answer must be a date in the following format: day.month.year. Example: 25.12.2011','event_time_field_flag': False, 'type': 'date'}], 'is_entity_question': False,
-              'type': 'field_set', 'required': False},
-             {'code': 'age', 'name': 'What is your age?', 'title': 'What is your age?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a number', 'type': 'integer'},
+                          'type': 'field_set', 'required': False, 'fieldSet_type': 'repeat'},
+                # end repeat
+            {'code': 'age', 'name': 'What is your age?', 'title': 'What is your age?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a number', 'type': 'integer'},
              {'code': 'height', 'name': 'What is your height?', 'title': 'What is your height?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a decimal or number', 'type': 'integer'},
              {'code': 'fav_color', 'title': 'Which colors you like?', 'required': True,
                 'choices': [{'value':{'text': 'Red', 'val': 'a'}}, {'value': {'text': 'Blue', 'val': 'b'}},
                           {'value':{'text': 'Green', 'val': 'c'}}], 'is_entity_question': False, 'type': 'select'},
-             {'code': 'pizza_fan', 'title': 'Do you like pizza?', 'required': True,
-                'choices': [{'value':{'text': 'Yes', 'val': 'a'}}, {'value':{'text': 'No', 'val': 'b'}}], 'is_entity_question': False, 'type': 'select1'},
-             {'code': 'other', 'name': 'What else you like?', 'title': 'What else you like?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
-             {'code': 'pizza_type', 'name': 'Which pizza type you like?', 'title': 'Which pizza type you like?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': 'text'},
+                #group
+            {'code': u'pizza_test_group', 'instruction': 'No answer required', 'name': u'Pizza fan', 'title': u'Pizza fan',
+              'fields': [{'code': u'pizza_fan', 'title': u'Do you like pizza?', 'required': True,
+                          'choices': [{'value': {'text': u'Yes', 'val': u'a'}}, {'value': {'text': u'No', 'val': u'b'}}],
+                          'is_entity_question': False, 'type': 'select1'},
+                         #group
+                         {'code': u'like_group', 'instruction': 'No answer required', 'name': u'Like group', 'title': u'Like group',
+                          'fields': [
+                              {'code': u'other', 'name': u'What else you like?', 'title': u'What else you like?', 'required': False,
+                               'is_entity_question': False, 'instruction': 'Answer must be a word', 'type': u'text'},
+                              {'code': u'pizza_type', 'name': u'Which pizza type you like?', 'title': u'Which pizza type you like?',
+                               'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a word',
+                               'type': u'text'}], 'is_entity_question': False, 'type': 'field_set', 'fieldSet_type': 'group',
+                          'required': False}], 'is_entity_question': False, 'type': 'field_set', 'fieldSet_type': 'group', 'required': False},
+
              {'code': 'location', 'name': 'Your location?', 'title': 'Your location?', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a geopoint', 'type': 'geocode'},
              {'code': 'add_age_height', 'name': 'Age and height', 'title': 'Age and height', 'required': False, 'is_entity_question': False, 'instruction': 'Answer must be a number', 'type': 'integer'},
              {'code': 'ab', 'title': 'A or B?', 'required': True,
