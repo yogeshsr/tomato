@@ -45,8 +45,6 @@ class QuestionBuilder( object ):
 
 
     def create_question(self, post_dict, code):
-        if post_dict["type"] == "text":
-            return self._create_text_question( post_dict, code )
         if post_dict["type"] == "integer":
             return self._create_integer_question( post_dict, code )
         if post_dict["type"] == "geocode":
@@ -62,7 +60,8 @@ class QuestionBuilder( object ):
         if post_dict["type"] == "list":
             return self._create_location_question( post_dict, code )
         if post_dict["type"] == "field_set":
-                    return self._create_field_set_question( post_dict, code )
+            return self._create_field_set_question( post_dict, code )
+        return self._create_text_question(post_dict, code)
 
     def _create_field_set_question(self, post_dict, code):
 

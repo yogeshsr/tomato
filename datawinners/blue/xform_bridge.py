@@ -23,6 +23,7 @@ from datawinners.search import *
 class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate'],
+                  'auto_filled':['start','end','today', 'deviceid','subscriberid','imei','phonenumber'],
                  'select': ['select one', 'select all that apply']
                  }
     supported_type = list(itertools.chain(*type_dict.values()))
@@ -46,6 +47,8 @@ class XlsFormParser():
             question = self._group(field)
         elif field['type'] in self.type_dict['field']:
             question = self._field(field)
+        elif field['type'] in self.type_dict['auto_filled']:
+            question = self._field(field)
         elif field['type'] in self.type_dict['select']:
             question = self._select(field)
         return question
@@ -64,7 +67,7 @@ class XlsFormParser():
 
     def _validate_supported_field(self, fields):
         for field in fields:
-            if field['type'] in self.supported_type:
+            if field['type']=='note' or field['type'] in self.supported_type:
                 if field['type'] in self.type_dict['group']:
                     return self._validate_supported_field(field['children'])
             else:
