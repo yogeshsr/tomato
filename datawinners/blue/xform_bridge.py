@@ -23,11 +23,11 @@ from datawinners.search import *
 class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate', 'cascading_select'],
-                  'auto_filled':['start','end','today', 'deviceid','subscriberid','imei','phonenumber'],
+                 'auto_filled':['note', 'start','end','today', 'deviceid','subscriberid','imei','phonenumber'],
                  'select': ['select one', 'select all that apply']
                  }
-    supported_type = list(itertools.chain(*type_dict.values()))
-
+    recognised_types = list(itertools.chain(*type_dict.values()))
+    supported_types = [type for type in recognised_types if type not in type_dict['auto_filled']]
 
     def __init__(self, path_or_file, project_name='Project'):
         if isinstance(path_or_file, basestring):
@@ -47,34 +47,29 @@ class XlsFormParser():
             question = self._group(field)
         elif field['type'] in self.type_dict['field']:
             question = self._field(field)
-        elif field['type'] in self.type_dict['auto_filled']:
-            question = self._field(field)
         elif field['type'] in self.type_dict['select']:
             question = self._select(field)
         return question
 
-    def _create_ungrouped_questions(self, group_info):
-        return [self._create_question(c) for c in group_info['children'] if c['type'] in self.supported_type]
-
     def _create_questions(self, fields):
         questions = []
         for field in fields:
-            if field.get('control') or field.get('type') not in self.supported_type:
+            if field.get('control'):
                 continue
-            if field['type'] in self.supported_type:
+            if field['type'] in self.supported_types:
                 questions.append(self._create_question(field))
         return questions
 
-    def _validate_supported_field(self, fields):
+    def _validate_fields_are_recognised(self, fields):
         for field in fields:
-            if field['type']=='note' or field['type'] in self.supported_type:
+            if field['type'] in self.recognised_types:
                 if field['type'] in self.type_dict['group']:
-                    return self._validate_supported_field(field['children'])
+                    return self._validate_fields_are_recognised(field['children'])
             else:
                 raise TypeNotSupportedException("question type '" + field['type'] + "' is not supported")
 
     def parse(self):
-        self._validate_supported_field(self.xform_dict['children'])
+        self._validate_fields_are_recognised(self.xform_dict['children'])
         questions = self._create_questions(self.xform_dict['children'])
         return self.xform, questions
 
@@ -185,7 +180,6 @@ class MangroveService():
         self._add_model_sub_element(root, 'eid', rep_id)
         return '<?xml version="1.0"?>%s' % ET.tostring(root)
 
-
     def create_project(self):
         questionnaire_id = self._create_questionnaire()
 
@@ -234,6 +228,7 @@ class XFormSubmissionProcessor():
 
 DIR = os.path.dirname(__file__)
 
+
 class XFormTransformer():
 
     def __init__(self, xform_as_string):
@@ -256,6 +251,7 @@ class XFormTransformer():
         r = model_tree.getroot()
         r.extend(form_tree.getroot())
         return etree.tostring(r)
+
 
 class TypeNotSupportedException(Exception):
 
