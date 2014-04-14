@@ -353,7 +353,7 @@ class XFormParser(object):
 
     def _format_field(self, field, values):
         code = field.code
-        if not values[code]:
+        if not values.get(code):
             return
         if type(field) == GeoCodeField:
             geo_code_list = values[code].split(' ')
