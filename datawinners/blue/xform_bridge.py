@@ -208,7 +208,7 @@ class XFormSubmissionProcessor():
             for v in value:
                 dict = {}
                 for f in field.fields:
-                    dict.update(self.get_dict(f, v[f.code]))
+                    dict.update(self.get_dict(f, v.get(f.code, '')))
                 dicts.append(dict)
             return {field.code: dicts}
         elif type(field) is DateField:
@@ -222,7 +222,7 @@ class XFormSubmissionProcessor():
         # todo instead of using form_model fields, use xform to find the fields
         d, s = {'form_code':form_code}, {}
         for f in form_model_fields:
-            d.update(self.get_dict(f, submission_values[f.code]))
+            d.update(self.get_dict(f, submission_values.get(f.code, '')))
         s.update({project_name:d})
         return xmldict.dict_to_xml(s)
 
