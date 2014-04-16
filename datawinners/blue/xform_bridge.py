@@ -3,6 +3,7 @@ import os
 from xml.etree import ElementTree as ET
 
 from lxml import etree
+import xlrd
 import xmldict
 from pyxform import create_survey_element_from_dict
 from pyxform.xls2json import parse_file_to_json
@@ -19,6 +20,7 @@ from mangrove.form_model.form_model import FormModel
 
 # noinspection PyUnresolvedReferences
 from datawinners.search import *
+from mangrove.transport.player.parser import XlsParser
 
 class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
@@ -128,7 +130,7 @@ class XlsFormParser():
 
 class MangroveService():
 
-    def __init__(self, user, xform_as_string, json_xform_data, questionnaire_code=None, project_name=None):
+    def __init__(self, user, xform_as_string, json_xform_data, questionnaire_code=None, project_name=None, xls_form=None):
         self.user = user
         user_profile = NGOUserProfile.objects.filter(user=self.user)[0]
         self.manager = get_database_manager(self.user)
@@ -139,6 +141,7 @@ class MangroveService():
         self.xform = xform_as_string
         self.xform_with_form_code = self._update_xform(xform_as_string, self.questionnaire_code, user_profile.reporter_id)
         self.json_xform_data = json_xform_data
+        self.xls_form = xls_form
 
     def _create_questionnaire(self):
         form_model = FormModel(self.manager, entity_type=self.entity_type, name=self.name, type='survey',
@@ -146,6 +149,7 @@ class MangroveService():
         QuestionnaireBuilder(form_model, self.manager).update_questionnaire_with_questions(self.json_xform_data)
         form_model.xform = self.xform_with_form_code
         questionnaire_id = form_model.save()
+        form_model.add_attachments(self.xls_form, 'questionnaire.xls')
         return questionnaire_id
 
     def _add_model_sub_element(self, root, name, value):
@@ -260,3 +264,17 @@ class TypeNotSupportedException(Exception):
 
     def __str__(self):
         return self.message
+
+class XlsProjectParser(XlsParser):
+    def parse(self, xls_contents):
+        assert xls_contents is not None
+        workbook = xlrd.open_workbook(file_contents=xls_contents)
+        xls_dict = {}
+        for worksheet in workbook.sheets():
+            parsedData=[]
+            for row_num in range(0,worksheet.nrows):
+                row = worksheet.row_values(row_num)
+                row = self._clean(row)
+                parsedData.append(row)
+            xls_dict[worksheet.name] = parsedData
+        return xls_dict

@@ -1,4 +1,5 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+from _codecs import encode
 import json
 import datetime
 import logging
@@ -16,6 +17,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from datawinners import settings
 from datawinners.accountmanagement.decorators import is_datasender_allowed, is_datasender, session_not_expired, is_not_expired, is_new_user, project_has_web_device, valid_web_user
+from datawinners.blue.xform_bridge import XlsProjectParser
 
 from datawinners.feeds.database import get_feeds_database
 from datawinners.feeds.mail_client import mail_feed_errors
@@ -506,7 +508,7 @@ def questionnaire(request, project_id):
         project_has_submissions = (success + error > 0)
         in_trial_mode = _in_trial_mode(request)
         if form_model.xform:
-            return render_to_response('project/edit_xform.html',
+                return render_to_response('project/edit_xform.html',
                                   {"existing_questions": repr(existing_questions),
                                    'questionnaire_code': form_model.form_code,
                                    'project': project,
@@ -516,6 +518,7 @@ def questionnaire(request, project_id):
                                    'is_quota_reached': is_quota_reached(request),
                                    'in_trial_mode': in_trial_mode,
                                    'post_url': reverse(edit_project, args=[project_id]),
+                                   'xls_form': repr(json.dumps(XlsProjectParser().parse(form_model.get_attachments(attachment_name='questionnaire.xls')))),
                                    'preview_links': get_preview_and_instruction_links_for_questionnaire()},
                                   context_instance=RequestContext(request))
         else:

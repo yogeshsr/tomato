@@ -17,7 +17,8 @@ function onComplete(id, fileName, responseJSON){
         alert(responseJSON['error_msg']);
     } else {
         alert('Project created: ' + responseJSON.project_name);
-        window.location.replace('/project/overview/' + responseJSON.project_id +'/');
+        update_table(responseJSON.xls_dict)
+//        window.location.replace('/project/overview/' + responseJSON.project_id +'/');
     }
 
 }

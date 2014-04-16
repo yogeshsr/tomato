@@ -18,7 +18,7 @@ from django.views.generic.base import View
 from datawinners import settings
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, valid_web_user
-from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor
+from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor, XlsProjectParser
 from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code, is_project_exist
@@ -58,7 +58,7 @@ class ProjectUpload(View):
 
             xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=project_name).parse()
 
-            mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire_code, project_name=project_name)
+            mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire_code, project_name=project_name, xls_form=file_content)
             id, name = mangroveService.create_project()
         except Exception as e:
             return HttpResponse(content_type='application/json', content=json.dumps({'error_msg':e.message}))
@@ -67,7 +67,8 @@ class ProjectUpload(View):
             json.dumps(
                 {
                     "project_name": name,
-                    "project_id": id
+                    "project_id": id,
+                    "xls_dict":XlsProjectParser().parse(file_content)
                 }),
             content_type='application/json')
 
@@ -108,7 +109,7 @@ class ProjectUpdate(View):
             questionnaire.xform = mangroveService.xform_with_form_code
 
             old_project.qid = questionnaire.save()
-
+            questionnaire.update_attachments(file_content,attachment_name='questionnaire.xls')
             deleted_question_codes = _get_deleted_question_codes(old_codes=old_field_codes,
                                                                  new_codes=questionnaire.field_codes())
             update_associated_submissions(manager.database_name, old_form_code,
@@ -123,7 +124,8 @@ class ProjectUpdate(View):
             json.dumps(
                 {
                     "project_name": old_project.name,
-                    "project_id": old_project.id
+                    "project_id": old_project.id,
+                    "xls_dict":XlsProjectParser().parse(file_content)
                 }),
             content_type='application/json')
 
