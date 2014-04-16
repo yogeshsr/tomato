@@ -1,6 +1,7 @@
 
 from datetime import *
 # from mangrove.form_model.form_model import get_form_model_by_entity_type
+from nose.plugins.attrib import attr
 from mangrove.form_model.form_model import list_form_models_by_code
 from mangrove.contrib.registration_validators import MobileNumberValidationsForReporterRegistrationValidator
 from mangrove.form_model.form_model import get_form_model_by_code
@@ -123,6 +124,13 @@ class FormModelTest(MangroveTestCase):
         self.assertTrue(integer_question.name == "Father's age")
         self.assertTrue(range_constraint.min, 15)
         self.assertTrue(range_constraint.max, 120)
+
+    @attr('dcs')
+    def test_should_add_attachments(self):
+        form_with_attachment = FormModel.get(self.manager, self.form_model_id)
+        self.form_model.add_attachments('attachments','questionnaire.xls')
+        attachment_data = form_with_attachment.get_attachments('questionnaire.xls')
+        self.assertEquals(attachment_data,'attachments')
 
     def test_should_add_select1_field(self):
         select_question = FormModel.get(self.manager, self.form_model_id).fields[3]

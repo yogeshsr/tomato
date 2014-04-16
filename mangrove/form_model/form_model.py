@@ -274,6 +274,14 @@ class FormModel(DataObject):
         self._delete_form_model_from_cache()
         return DataObject.save(self)
 
+    def update_attachments(self, attachments, attachment_name=None):
+        return self.put_attachment(self._doc, attachments, filename=attachment_name)
+
+    def add_attachments(self, attachments, attachment_name=None):
+        return self.put_attachment(self._doc, attachments, filename=attachment_name)
+
+    def get_attachments(self, attachment_name=None):
+        return self.get_attachment(self._doc.id, filename=attachment_name)
 
     def get_field_by_name(self, name):
         for field in self._form_fields:
