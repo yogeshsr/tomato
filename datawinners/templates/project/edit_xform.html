@@ -32,6 +32,7 @@
          <script type="text/javascript" src="/media/javascript/project/update_project.js"></script>
          <script src="/media/javascript/slick/lib/jquery-ui-1.8.16.custom.min.js"></script>
          <script src="/media/javascript/slick/lib/jquery.event.drag-2.2.js"></script>
+         <script type="text/javascript" src="/media/javascript/project/project_download.js"></script>
          <script src="/media/javascript/slick/slick.core.js"></script>
          <script src="/media/javascript/slick/slick.editors.js"></script>
          <script src="/media/javascript/slick/slick.grid.js"></script>
@@ -49,14 +50,24 @@
         var project_has_submissions = "{{ project_has_submissions }}";
         var post_url = "{{ post_url }}"
         var project_id = "{{ project_id }}"
+        $(function(){
+           update_table(xls);
+        });
     </script>
 {% endblock %}
 
 {% block content %}
     <div>
-        <div class="questionnaire_type_header">
-            <span class="header">{% trans "Upload a XLXForm" %}</span>
+        <div class="heading_block alpha data_ana border_none">
+            <span class="links float_right">
+                <a href="javascript:void(0);" class="download_link">{% trans "Download Project" %}</a>
+            </span>
         </div>
+        <form id="download_form" method="POST">
+        {% csrf_token %}
+        <input id="questionnaire_code" name='questionnaire_code' type="hidden" value="{{ questionnaire_code }}"/>
+        <input id='project_name' name='project_name' type="hidden" value="{{ project.name }}"/>
+        </form>
         <div>
             <noscript>
                 <p>{% trans "Please enable JavaScript to use file uploader." %}</p>
@@ -67,6 +78,5 @@
         <div id="choices" style="height: 200px;"></div>
         <div id="cascades" style="height: 200px;"></div>
         <div id="other" style="height: 200px;"></div>
-        <script>update_table(xls)</script>
     </div>
 {% endblock %}

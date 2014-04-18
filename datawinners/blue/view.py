@@ -15,9 +15,10 @@ from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_view_exempt, csrf_response_exempt, csrf_exempt
 from django.views.generic.base import View
+import xlwt
 from datawinners import settings
 
-from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, valid_web_user
+from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, is_datasender
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor, XlsProjectParser
 from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
@@ -29,6 +30,7 @@ from datawinners.project.views.views import SurveyWebQuestionnaireRequest
 from datawinners.project.wizard_view import update_associated_submissions, \
     _get_deleted_question_codes
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
+from datawinners.utils import workbook_add_sheet
 from mangrove.form_model.form_model import FormModel, get_form_model_by_code
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id
 
@@ -267,4 +269,26 @@ def get_questionnaire(request, project_id):
 
     response = HttpResponse(json.dumps({'transformed_xform': re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform())}), status=200, content_type='application/json')
     enable_cors(response)
+    return response
+
+@login_required
+@session_not_expired
+@is_datasender
+@is_not_expired
+def project_download(request):
+    project_name = request.POST.get(u"project_name")
+    questionnaire_code = request.POST.get(u'questionnaire_code')
+
+    manager = get_database_manager(request.user)
+    form_model = get_form_model_by_code(manager, questionnaire_code)
+    raw_excel = form_model.get_attachments('questionnaire.xls')
+    excel_transformed = XlsProjectParser().parse(raw_excel);
+
+    response = HttpResponse(mimetype="application/vnd.ms-excel")
+    response['Content-Disposition'] = 'attachment; filename="%s.xls"' % project_name
+
+    wb = xlwt.Workbook()
+    for sheet in excel_transformed:
+        workbook_add_sheet(wb, excel_transformed[sheet], sheet)
+    wb.save(response)
     return response
