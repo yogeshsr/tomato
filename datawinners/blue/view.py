@@ -103,10 +103,6 @@ class ProjectUpdate(View):
             old_form_code = questionnaire.form_code
             old_field_codes = questionnaire.field_codes()
 
-            questionnaire.name = file_name
-            questionnaire.activeLanguages = old_project.language
-            questionnaire.entity_type = ['reporter']
-            questionnaire.form_code = old_project.name.split('-')[1]
             QuestionnaireBuilder(questionnaire, manager).update_questionnaire_with_questions(json_xform_data)
             questionnaire.xform = mangroveService.xform_with_form_code
 
