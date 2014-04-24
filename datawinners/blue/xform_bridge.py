@@ -14,7 +14,7 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.field import FieldSet, GeoCodeField, DateField
+from mangrove.form_model.field import FieldSet, GeoCodeField, DateField, ImageField
 from mangrove.form_model.form_model import FormModel
 
 
@@ -26,7 +26,8 @@ class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate', 'cascading_select'],
                  'auto_filled':['note', 'start','end','today', 'deviceid','subscriberid','imei','phonenumber'],
-                 'select': ['select one', 'select all that apply']
+                 'select': ['select one', 'select all that apply'],
+                 'media': ['photo']
                  }
     recognised_types = list(itertools.chain(*type_dict.values()))
     supported_types = [type for type in recognised_types if type not in type_dict['auto_filled']]
@@ -51,6 +52,8 @@ class XlsFormParser():
             question = self._field(field)
         elif field['type'] in self.type_dict['select']:
             question = self._select(field)
+        elif field['type'] in self.type_dict['media']:
+            question = self._media(field)
         return question
 
     def _create_questions(self, fields):
@@ -127,6 +130,13 @@ class XlsFormParser():
         if field.get('bind') and 'yes' == str(field['bind'].get('required')).lower():
             return True
         return False
+
+    def _media(self, field):
+        name = field['label']
+        code = field['name']
+        question = {"title": name, "code": code, "type": "image", 'required': self.is_required(field), "is_entity_question": False}
+        return question
+
 
 class MangroveService():
 

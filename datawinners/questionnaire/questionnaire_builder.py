@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext
 from mangrove.errors.MangroveException import DataObjectNotFound
-from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, FieldSet
+from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, FieldSet, \
+    ImageField
 from mangrove.form_model.form_model import LOCATION_TYPE_FIELD_NAME
 from mangrove.form_model.validation import NumericRangeConstraint, TextLengthConstraint, RegexConstraint, ShortCodeRegexConstraint
 from mangrove.utils.helpers import slugify
@@ -62,7 +63,9 @@ class QuestionBuilder( object ):
         if post_dict["type"] == "list":
             return self._create_location_question( post_dict, code )
         if post_dict["type"] == "field_set":
-                    return self._create_field_set_question( post_dict, code )
+            return self._create_field_set_question( post_dict, code )
+        if post_dict["type"] == "image":
+            return self._create_media_question( post_dict, code )
 
     def _create_field_set_question(self, post_dict, code):
 
@@ -151,6 +154,11 @@ class QuestionBuilder( object ):
     def _create_location_question(self, post_dict, code):
         return HierarchyField( name=LOCATION_TYPE_FIELD_NAME, code=code,
                                label=post_dict["title"] , instruction=post_dict.get( "instruction" ) )
+
+    def _create_media_question(self, post_dict, code):
+        return ImageField( name=self._get_name(post_dict), code=code,
+                           label=post_dict["title"], instruction=post_dict.get("instruction"), required=post_dict.get( "required" ) )
+
 
 def get_max_code(fields):
     json_fields = [f._to_json() for f in fields]

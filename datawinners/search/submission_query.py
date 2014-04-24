@@ -3,6 +3,8 @@ from datawinners.search.filters import SubmissionDateRangeFilter, ReportingDateR
 from datawinners.search.submission_headers import HeaderFactory
 from datawinners.settings import ELASTIC_SEARCH_URL
 from datawinners.search.query import QueryBuilder, Query
+from mangrove.form_model.field import ImageField
+from mangrove.form_model.form_model import get_field_by_attribute_value
 
 
 class SubmissionQueryBuilder(QueryBuilder):
@@ -73,9 +75,24 @@ class SubmissionQueryResponseCreator():
                     elif key == 'ds_name':
                         self.combine_name_and_id(res.get('ds_id'), res.get('ds_name'), submission)
                     else:
-                        submission.append(res.get(key))
+                        submission.append(self.append_if_attachments_are_present(res, key))
             submissions.append(submission)
         return submissions
+
+    def _get_key(self, key):
+        if '_' in key:
+            return key[key.index('_') + 1:]
+        else:
+            return key
+
+    def append_if_attachments_are_present(self,res,  key):
+        if type(get_field_by_attribute_value(self.form_model, 'code', self._get_key(key))) is ImageField:
+            value = res.get(key)
+            if value:
+                return  "<span style=\"display:inline-block;width:70px; height: 70px;border:1px solid #CCC; margin-right:5px;display: table-cell;vertical-align: middle;\"><img style=\"width:70px;\" src='/attachment/%s/%s'/></span>" \
+                        "<span style=\"display: table-cell;vertical-align: middle;padding: 5px;\"><a href='/download/attachment/%s/%s'>%s</a></span>" % (res._id, value, res._id, value, value)
+        else:
+            return res.get(key)
 
 
 class SubmissionQuery(Query):

@@ -62,21 +62,83 @@ requirejs( [ 'jquery', 'Modernizr', 'enketo-js/Form' ],
                 DW.blockUI({ message: '<h1><img src="/media/images/ajax-loader.gif"/><span class="loading">' + gettext("Just a moment") + '...</span></h1>', css: { width: '275px'}});
                 var data = form.getDataStr();
                 var saveURL= submissionUpdateUrl || submissionCreateUrl;
-
-                var success = function(data,status){
-                    DW.unblockUI();
-                    alert('Your data has been saved successfully');
-                    window.location.replace(surveyResponseId == '' ? submissionURL : submissionLogURL);
-                };
-                var error = function(status){
-                    alert('Unable to submit form, please try after some time');
-                    DW.unblockUI();
-                };
-
-                $.post(saveURL,{'a':data}).done(success).fail(error);
+                sendFormData(form.getDataStr(), saveURL);
             }
         } );
 
+        function getMediaFiles(mediaBlocks) {
+            var mediaFiles = {};
+
+            function hasMedia(block) {
+                return block.getElementsByClassName('file-preview').length != 0;
+            }
+
+            function getMediaNameFrom(block) {
+                return block.getElementsByTagName('input')[0].attributes['data-previous-file-name'].value
+            }
+
+            function getMediaSrcFrom(block) {
+                return block.getElementsByClassName('file-preview')[0].src;
+            }
+
+            for (var i=0;i<mediaBlocks.length;i++){
+                var block = mediaBlocks[i];
+                if(hasMedia(block)){
+                    mediaFiles[getMediaNameFrom(block)] = getMediaSrcFrom(block);
+                }
+            }
+            return mediaFiles;
+        }
+
+        function sendFormData(data, url){
+                var files = getMediaFiles(document.getElementsByClassName('with-media'))
+                var success = function(data,status){
+                        DW.unblockUI();
+                        alert('Your data has been saved successfully');
+                        window.location.replace(surveyResponseId == '' ? submissionURL : submissionLogURL);
+                    };
+                var error = function(status){
+                        alert('Unable to submit form, please try after some time');
+                        DW.unblockUI();
+                    };
+
+                if(Object.keys(files).length==0){
+                    $.post(url,{'form_data':data, 'media_data':{}}).done(success).fail(error);
+                    return;
+                }
+
+                var base64=[];
+                var mediaFiles={};
+                var func_callback = function(filename, file, deferred){
+                    mediaFiles[filename] = file;
+                    deferred.resolve();
+                }
+                for (var filename in files){
+                    base64.push(convertImgToBase64(filename, files[filename], func_callback));
+                }
+
+                $.when.apply($, base64).then(function() {
+                    $.post(url,{'form_data':data, 'media_data': JSON.stringify(mediaFiles)}).done(success).fail(error);
+                });
+            }
+
+             function convertImgToBase64(filename, url, callback, outputFormat){
+                    var deferred = $.Deferred();
+                    var canvas = document.createElement('CANVAS'),
+                    ctx = canvas.getContext('2d'),
+                    img = new Image;
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = function(){
+                        canvas.height = img.height;
+                        canvas.width = img.width;
+                        ctx.drawImage(img,0,0);
+                        var dataURL = canvas.toDataURL("image/");
+                        callback.call(this, filename, dataURL, deferred);
+                        canvas = null;
+                    };
+                    img.src = url;
+                    return deferred.promise();
+              }
         //initialize the form
 
         function initializeForm() {

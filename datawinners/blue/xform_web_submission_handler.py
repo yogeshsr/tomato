@@ -1,3 +1,5 @@
+import base64
+import json
 from django.http import HttpResponseBadRequest, HttpResponse
 from datawinners.accountmanagement.models import NGOUserProfile, Organization
 from datawinners.feeds.database import get_feeds_database
@@ -13,13 +15,18 @@ from mangrove.transport.repository.survey_responses import get_survey_response_b
 
 class XFormWebSubmissionHandler():
 
-    def __init__(self, request_user, xml_submission_file):
+    def __init__(self, request_user, request):
+        self.request = request
         self.manager = get_database_manager(request_user)
         self.request_user = request_user
         self.player = XFormPlayerV2(self.manager, get_feeds_database(self.request_user))
-        self.xml_submission_file = xml_submission_file
+        self.xml_submission_file = request.POST['form_data']
+        self.media_file = {}
+        if request.POST.get('media_data'):
+            self.media_file.update(json.loads(request.POST['media_data']))
+
         self.user_profile = NGOUserProfile.objects.get(user=self.request_user)
-        self.mangrove_request = Request(message=self.xml_submission_file,
+        self.mangrove_request = Request(message=self.xml_submission_file, media=self.media_file,
             transportInfo=
             TransportInfo(transport=SMART_PHONE,
                 source=self.request_user.email,

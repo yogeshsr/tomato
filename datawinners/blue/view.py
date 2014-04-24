@@ -1,5 +1,9 @@
+import base64
+from io import StringIO
 import json
 import logging
+import mimetypes
+import os
 import re
 from tempfile import NamedTemporaryFile
 
@@ -192,7 +196,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
     def _model_str_of(self, survey_response_id, project_name):
         survey_response = get_survey_response_by_id(self.manager, survey_response_id)
         xform_instance_xml = self.submissionProcessor.\
-            get_model_edit_str(self.form_model.fields, survey_response.values, project_name, self.form_model.form_code)
+            get_model_edit_str(self.form_model.fields, survey_response.values, project_name, self.form_model.form_code,)
         return xform_instance_xml
 
     def response_for_xform_edit_get_request(self, survey_response_id):
@@ -218,7 +222,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
 @csrf_exempt
 def new_web_submission(request):
     try:
-        response = XFormWebSubmissionHandler(request.user, xml_submission_file=request.POST['a']).\
+        response = XFormWebSubmissionHandler(request.user, request=request).\
             create_new_submission_response()
         response['Location'] = request.build_absolute_uri(request.path)
         return response
@@ -229,7 +233,7 @@ def new_web_submission(request):
 @csrf_exempt
 def update_web_submission(request, survey_response_id):
     try:
-        return XFormWebSubmissionHandler(request.user, xml_submission_file=request.POST['a']).\
+        return XFormWebSubmissionHandler(request.user, request=request).\
             update_submission_response(survey_response_id)
     except Exception as e:
         logger.exception("Exception in submission : \n%s" % e)
@@ -255,6 +259,17 @@ def get_projects(request):
     enable_cors(response)
     return response
 
+def get_attachment(request, document_id, attachment_name):
+     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+     return HttpResponse(manager.get_attachments(document_id, attachment_name=attachment_name))
+
+def attachment_download(request, document_id, attachment_name):
+     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+     raw_file = manager.get_attachments(document_id, attachment_name=attachment_name)
+     mime_type = mimetypes.guess_type(os.path.basename(attachment_name))[0]
+     response = HttpResponse(raw_file, mimetype=mime_type)
+     response['Content-Disposition'] = 'attachment; filename="%s"' % attachment_name
+     return response
 
 def get_questionnaire(request, project_id):
     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
