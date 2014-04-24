@@ -109,10 +109,10 @@ class DataObject(object):
 
     def put_attachment(self, document, file, filename=None):
         if self._doc is not None:
-            self._dbm._put_attachments(document, file, attachment_name=filename)
+            self._dbm.put_attachment(document, file, attachment_name=filename)
 
     def get_attachment(self, doc_id, filename=None):
-           return self._dbm._get_attachments(doc_id, attachment_name=filename)
+           return self._dbm.get_attachments(doc_id, attachment_name=filename)
 
     def delete(self):
         if self.id is not None:
@@ -247,11 +247,11 @@ class DatabaseManager(object):
                 documents[x]._data['_rev'] = results[x][2]
         return results
 
-    def _put_attachments(self, document, attachment, attachment_name=None):
+    def put_attachment(self, document, attachment, attachment_name=None):
         if attachment_name is not None:
             return self.database.put_attachment(document, attachment, attachment_name)
 
-    def _get_attachments(self, id, attachment_name=None):
+    def get_attachments(self, id, attachment_name=None):
         if attachment_name is not None:
             return self.database.get_attachment(id, attachment_name, 'Not Found').read()
 
