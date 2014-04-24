@@ -44,7 +44,18 @@ def create_question_from(dictionary, dbm):
     elif type == field_attributes.FIELD_SET:
         return _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required,
                                     dbm)
+    elif type == field_attributes.IMAGE:
+        return _get_image_field(code, dictionary, is_entity_question, label, name, instruction, required)
     return None
+
+def _get_image_field(code, dictionary, is_entity_question, label, name, instruction, required):
+    constraints, constraints_json = [], dictionary.get("constraints")
+    if constraints_json is not None:
+        constraints = constraints_factory(constraints_json)
+    field = ImageField(name=name, code=code, label=label, entity_question_flag=is_entity_question,
+                      constraints=constraints, instruction=instruction, required=required)
+    return field
+
 
 def _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required, dbm):
     constraints, constraints_json = [], dictionary.get("constraints")
@@ -156,6 +167,7 @@ class field_attributes(object):
     NAME = "name"
     LIST_FIELD = "list"
     FIELD_SET = "field_set"
+    IMAGE = "image"
 
 class Field(object):
     def __init__(self, type="", name="", code="", label='', instruction='',
@@ -379,6 +391,19 @@ class ExcelDate(object):
     def __eq__(self, other):
         return self.date == other.date
 
+class ImageField(Field):
+
+    def formatted_field_values_for_excel(self, value):
+        return value
+
+    def __init__(self, name, code, label,  constraints=None, instruction=None,
+                 entity_question_flag=False, required=True):
+        if not constraints: constraints = []
+        assert isinstance(constraints, list)
+        Field.__init__(self, type=field_attributes.IMAGE, name=name, code=code,
+                       label=label, instruction=instruction,constraints=constraints, required=required)
+        if entity_question_flag:
+            self._dict[self.ENTITY_QUESTION_FLAG] = entity_question_flag
 
 class TextField(Field):
     DEFAULT_VALUE = "defaultValue"
