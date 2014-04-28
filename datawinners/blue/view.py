@@ -255,7 +255,10 @@ def get_projects(request):
     for row in rows:
         project = dict(name=row['value']['name'], id=row['value']['_id'])
         project_list.append(project)
-    response = HttpResponse(json.dumps(project_list), status=200, content_type='application/json')
+    content = json.dumps(project_list)
+    if request.GET.get('callback'):
+        content= request.GET['callback'] + '('+ content + ')'
+    response = HttpResponse(content, status=200, content_type='application/json')
     enable_cors(response)
     return response
 
@@ -277,8 +280,10 @@ def get_questionnaire(request, project_id):
     if project.is_deleted():
         return HttpResponse(json.dumps({'error':'Project is deleted'}), status=200, content_type='application/json')
     questionnaire = FormModel.get(manager, project.qid)
-
-    response = HttpResponse(json.dumps({'transformed_xform': re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform())}), status=200, content_type='application/json')
+    content = json.dumps({'xform': re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform())})
+    if request.GET.get('callback'):
+        content= request.GET['callback']+'('+ content +')'
+    response = HttpResponse(content, status=200, content_type='application/json')
     enable_cors(response)
     return response
 
