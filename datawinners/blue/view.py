@@ -36,7 +36,7 @@ from datawinners.project.wizard_view import update_associated_submissions, \
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from datawinners.utils import workbook_add_sheet
 from mangrove.form_model.form_model import FormModel, get_form_model_by_code
-from mangrove.transport.repository.survey_responses import get_survey_response_by_id
+from mangrove.transport.repository.survey_responses import get_survey_response_by_id, survey_responses_by_form_code
 
 logger = logging.getLogger("datawinners.blue")
 
@@ -248,18 +248,19 @@ def enable_cors(response):
     return response
 
 
-def get_projects(request):
+def get_questionnaires(request):
     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
     project_list = []
-    rows = manager.load_all_rows_in_view('all_projects', descending=True, limit=8)
+    rows = manager.load_all_rows_in_view('all_projects', descending=True)
     for row in rows:
-        project = dict(name=row['value']['name'], id=row['value']['_id'])
-        project_list.append(project)
+        project =  Project.load(manager.database, row['id']);
+        questionnaire = FormModel.get(manager, project.qid)
+        project_temp = dict(name=project.name, id=project.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
+        project_list.append(project_temp)
     content = json.dumps(project_list)
     if request.GET.get('callback'):
         content= request.GET['callback'] + '('+ content + ')'
     response = HttpResponse(content, status=200, content_type='application/json')
-    enable_cors(response)
     return response
 
 def get_attachment(request, document_id, attachment_name):
@@ -273,19 +274,6 @@ def attachment_download(request, document_id, attachment_name):
      response = HttpResponse(raw_file, mimetype=mime_type)
      response['Content-Disposition'] = 'attachment; filename="%s"' % attachment_name
      return response
-
-def get_questionnaire(request, project_id):
-    manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
-    project = Project.load(manager.database, project_id)
-    if project.is_deleted():
-        return HttpResponse(json.dumps({'error':'Project is deleted'}), status=200, content_type='application/json')
-    questionnaire = FormModel.get(manager, project.qid)
-    content = json.dumps({'xform': re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform())})
-    if request.GET.get('callback'):
-        content= request.GET['callback']+'('+ content +')'
-    response = HttpResponse(content, status=200, content_type='application/json')
-    enable_cors(response)
-    return response
 
 @login_required
 @session_not_expired
