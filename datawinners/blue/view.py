@@ -37,6 +37,7 @@ from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from datawinners.utils import workbook_add_sheet
 from mangrove.form_model.form_model import FormModel, get_form_model_by_code
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id, survey_responses_by_form_code
+from mangrove.utils.dates import py_datetime_to_js_datestring
 
 logger = logging.getLogger("datawinners.blue")
 
@@ -219,6 +220,19 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
+    def get_submissions(self):
+        submission_list = []
+        questionnaire = FormModel.get(self.manager, self.project.qid)
+        submissions = survey_responses_by_form_code(self.manager,questionnaire.form_code)
+        for submission in submissions:
+            submission_list.append({'id': submission.id,
+                                    'form_code': self.project.id,
+                                    'type': "surveyResponse",
+                                    'created': py_datetime_to_js_datestring(submission.created),
+                                    'xml': self._model_str_of(submission.id, self.project.name)
+                                  })
+        return submission_list
+
 @csrf_exempt
 def new_web_submission(request):
     try:
@@ -260,6 +274,15 @@ def get_questionnaires(request):
     content = json.dumps(project_list)
     if request.GET.get('callback'):
         content= request.GET['callback'] + '('+ content + ')'
+    response = HttpResponse(content, status=200, content_type='application/json')
+    return response
+
+def get_submissions(request, survey_id):
+    request.user = User.objects.get(username='tester150411@gmail.com')
+    survey_request = SurveyWebXformQuestionnaireRequest(request, survey_id, XFormSubmissionProcessor())
+    content = json.dumps(survey_request.get_submissions())
+    if request.GET.get('callback'):
+       content= request.GET['callback'] + '('+ content + ')'
     response = HttpResponse(content, status=200, content_type='application/json')
     return response
 
