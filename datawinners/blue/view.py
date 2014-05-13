@@ -19,6 +19,7 @@ from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_view_exempt, csrf_response_exempt, csrf_exempt
 from django.views.generic.base import View
+from django_digest.decorators import httpdigest
 import xlwt
 from datawinners import settings
 
@@ -261,9 +262,10 @@ def enable_cors(response):
     response['Access-Control-Allow-Headers'] = 'origin, content-type, accept, x-requested-with'
     return response
 
-
+@csrf_exempt
+@httpdigest
 def get_questionnaires(request):
-    manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
+    manager =  get_database_manager(request.user)
     project_list = []
     rows = manager.load_all_rows_in_view('all_projects', descending=True)
     for row in rows:
@@ -277,8 +279,9 @@ def get_questionnaires(request):
     response = HttpResponse(content, status=200, content_type='application/json')
     return response
 
+@csrf_exempt
+@httpdigest
 def get_submissions(request, survey_id):
-    request.user = User.objects.get(username='tester150411@gmail.com')
     survey_request = SurveyWebXformQuestionnaireRequest(request, survey_id, XFormSubmissionProcessor())
     content = json.dumps(survey_request.get_submissions())
     if request.GET.get('callback'):
