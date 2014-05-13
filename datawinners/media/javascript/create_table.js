@@ -23,16 +23,6 @@ for (var i = 0; i < 26; i++) {
     });
 }
 
-    for (var i = 0; i < 26; i++) {
-        columns.push({
-            id: i,
-            name: String.fromCharCode("A".charCodeAt(0) + i),
-            field: i,
-            width: 200,
-            editor: Slick.Editors.Text
-        });
-    }
-
     var index = 0;
 
     for (var sheet in xls_dict) {
@@ -56,15 +46,4 @@ for (var i = 0; i < 26; i++) {
         data = [];
         document.getElementById(sheet).innerHTML = '<div>' + sheet + '</div>' + document.getElementById(sheet).innerHTML;
     }
-
-    for (var i = 0; i < 26; i++) {
-        columns.push({
-            id: i,
-            name: String.fromCharCode("A".charCodeAt(0) + i),
-            field: i,
-            width: 200,
-            editor: Slick.Editors.Text
-        });
-    }
-
 }
