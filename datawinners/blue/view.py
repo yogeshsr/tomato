@@ -24,6 +24,7 @@ import xlwt
 from datawinners import settings
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, is_datasender
+from datawinners.blue.auth import logged_in_or_basicauth
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor, XlsProjectParser
 from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
@@ -263,7 +264,7 @@ def enable_cors(response):
     return response
 
 @csrf_exempt
-@httpdigest
+@logged_in_or_basicauth()
 def get_questionnaires(request):
     manager =  get_database_manager(request.user)
     project_list = []
@@ -271,8 +272,9 @@ def get_questionnaires(request):
     for row in rows:
         project =  Project.load(manager.database, row['id']);
         questionnaire = FormModel.get(manager, project.qid)
-        project_temp = dict(name=project.name, id=project.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
-        project_list.append(project_temp)
+        if questionnaire.xform:
+            project_temp = dict(name=project.name, id=project.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
+            project_list.append(project_temp)
     content = json.dumps(project_list)
     if request.GET.get('callback'):
         content= request.GET['callback'] + '('+ content + ')'
@@ -280,7 +282,7 @@ def get_questionnaires(request):
     return response
 
 @csrf_exempt
-@httpdigest
+@logged_in_or_basicauth()
 def get_submissions(request, survey_id):
     survey_request = SurveyWebXformQuestionnaireRequest(request, survey_id, XFormSubmissionProcessor())
     content = json.dumps(survey_request.get_submissions())
