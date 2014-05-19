@@ -24,7 +24,7 @@ import xlwt
 from datawinners import settings
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, is_datasender
-from datawinners.blue.auth import logged_in_or_basicauth
+from datawinners.blue.auth import logged_in_or_basicauth, enable_cors
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor, XlsProjectParser
 from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
@@ -255,14 +255,6 @@ def update_web_submission(request, survey_response_id):
         logger.exception("Exception in submission : \n%s" % e)
         return HttpResponseBadRequest()
 
-def enable_cors(response):
-    response['Access-Control-Allow-Origin'] = '*'
-    response['Access-Control-Max-Age'] = '120'
-    response['Access-Control-Allow-Credentials'] = 'true'
-    response['Access-Control-Allow-Methods'] = 'HEAD, GET, OPTIONS, POST, DELETE'
-    response['Access-Control-Allow-Headers'] = 'origin, content-type, accept, x-requested-with'
-    return response
-
 @csrf_exempt
 @logged_in_or_basicauth()
 def get_questionnaires(request):
@@ -279,7 +271,8 @@ def get_questionnaires(request):
     if request.GET.get('callback'):
         content= request.GET['callback'] + '('+ content + ')'
     response = HttpResponse(content, status=200, content_type='application/json')
-    return response
+
+    return enable_cors(response)
 
 @csrf_exempt
 @logged_in_or_basicauth()

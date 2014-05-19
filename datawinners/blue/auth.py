@@ -3,6 +3,10 @@ import base64
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
+# The code is taken from https://djangosnippets.org/snippets/243/
+# The function view_or_basicauth is modified to support preflight (OPTIONS) request
+# Function enable_cors is custom written
+
 #############################################################################
 #
 def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
@@ -19,6 +23,15 @@ def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
 
     # They are not logged in. See if they provided login credentials
     #
+
+    # HTTP_X_REQUESTED_WITH
+    # ['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+
+    response = HttpResponse()
+    if 'OPTIONS' == request.META.get('REQUEST_METHOD'):
+        enable_cors(response)
+        return response
+
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
         if len(auth) == 2:
@@ -38,9 +51,9 @@ def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
     # something in the authorization attempt failed. Send a 401
     # back to them to ask them to authenticate.
     #
-    response = HttpResponse()
     response.status_code = 401
     response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+    # enable_cors(response)
     return response
 
 #############################################################################
@@ -104,3 +117,11 @@ def has_perm_or_basicauth(perm, realm = ""):
                                      realm, *args, **kwargs)
         return wrapper
     return view_decorator
+
+def enable_cors(response):
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Max-Age'] = '120'
+    response['Access-Control-Allow-Credentials'] = 'true'
+    response['Access-Control-Allow-Methods'] = 'HEAD, GET, OPTIONS, POST, DELETE'
+    response['Access-Control-Allow-Headers'] = 'origin, content-type, accept, x-requested-with, authorization, X-Custom-Header'
+    return response
