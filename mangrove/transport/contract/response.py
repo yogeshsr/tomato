@@ -1,5 +1,5 @@
 class Response(object):
-    def __init__(self, reporters=[],  survey_response_id=None, success=False, errors=None,
+    def __init__(self, reporters=[],  survey_response_id=None, success=False, created=None, errors=None,
                  data_record_id=None, short_code=None,
                  cleaned_data=None, is_registration=False, entity_type=None, form_code=None, feed_error_message=None,
                  subject=None):
@@ -15,6 +15,7 @@ class Response(object):
         self.form_code = form_code
         self.feed_error_message = feed_error_message
         self.subject = subject
+        self.created = created
 
 
 def create_response_from_form_submission(reporters, form_submission=None):
