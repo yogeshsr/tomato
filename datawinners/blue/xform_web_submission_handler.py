@@ -11,6 +11,7 @@ from datawinners.xforms.views import sp_submission_logger, logger, get_errors
 from mangrove.transport import Request, TransportInfo
 from mangrove.transport.player.new_players import XFormPlayerV2
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id
+from mangrove.utils.dates import py_datetime_to_js_datestring
 
 
 class XFormWebSubmissionHandler():
@@ -51,7 +52,8 @@ class XFormWebSubmissionHandler():
             return HttpResponseBadRequest()
 
         self.organization.increment_message_count_for(incoming_sp_count=1)
-        success_response = HttpResponse(status=201)
+        content = json.dumps({'id':response.survey_response_id,'created':py_datetime_to_js_datestring(response.created)})
+        success_response = HttpResponse(content, status=201)
         success_response['submission_id'] = response.survey_response_id
         check_quotas_and_update_users(self.organization)
         return success_response
