@@ -246,6 +246,7 @@ class SurveyResponseDocument(DocumentBase):
         self.destination = destination
         self.created_by = self.modified_by = modified_by_id
         self.form_code = form_code
+        self.created = utcnow()
         self.form_model_revision = form_model_revision
         self.values = values
         self.status = status

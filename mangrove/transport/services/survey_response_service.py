@@ -56,7 +56,7 @@ class SurveyResponseService(object):
                 feed_create_errors += e.message + '\n'
                 feed_create_errors += traceback.format_exc()
         subject = form_submission.get_entity(self.dbm) if form_submission.short_code else None
-        return Response(reporter_names,  survey_response.uuid, form_submission.saved,
+        return Response(reporter_names,  survey_response.uuid, form_submission.saved, survey_response.created,
                         form_submission.errors, form_submission.data_record_id, form_submission.short_code,
                         form_submission.cleaned_data, form_submission.is_registration, form_submission.entity_type,
                         form_submission.form_model.form_code, feed_create_errors, subject=subject)
