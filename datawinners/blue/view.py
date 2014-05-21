@@ -245,6 +245,19 @@ def new_web_submission(request):
         logger.exception("Exception in submission : \n%s" % e)
         return HttpResponseBadRequest()
 
+
+@csrf_exempt
+@logged_in_or_basicauth()
+def upload_submission(request):
+    try:
+        response = XFormWebSubmissionHandler(request.user, request=request).\
+            create_new_submission_response()
+        response['Location'] = request.build_absolute_uri(request.path)
+        return enable_cors(response)
+    except Exception as e:
+        logger.exception("Exception in submission : \n%s" % e)
+        return HttpResponseBadRequest()
+
 @csrf_exempt
 def update_web_submission(request, survey_response_id):
     try:
@@ -281,7 +294,7 @@ def get_submissions(request, survey_id):
     if request.GET.get('callback'):
        content= request.GET['callback'] + '('+ content + ')'
     response = HttpResponse(content, status=200, content_type='application/json')
-    return response
+    return enable_cors(response)
 
 def get_attachment(request, document_id, attachment_name):
      manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
