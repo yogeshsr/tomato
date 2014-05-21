@@ -83,12 +83,17 @@ def get_form_model_cache_key(form_code, dbm):
 
 def header_fields(form_model, key_attribute="name", ref_header_dict=None):
     header_dict = ref_header_dict or OrderedDict()
-    for field in form_model.fields:
+    _header_fields(form_model.fields, key_attribute, header_dict)
+    return header_dict
+
+def _header_fields(fields, key_attribute, header_dict):
+    for field in fields:
+        if isinstance(field, FieldSet) and field.is_group():
+            _header_fields(field.fields, key_attribute, header_dict)
+            continue
         key = field.__getattribute__(key_attribute) if type(key_attribute) == str else key_attribute(field)
         if not header_dict.get(key):
             header_dict.update({key: field.label})
-    return header_dict
-
 
 def get_field_by_attribute_value(form_model, key_attribute, attribute_label):
     #ex: field1.name='first_name' field1.code='q1'

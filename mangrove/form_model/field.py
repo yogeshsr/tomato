@@ -42,10 +42,10 @@ def create_question_from(dictionary, dbm):
     elif type == field_attributes.UNIQUE_ID_FIELD:
         return _get_unique_id_field(unique_id_type, code, dictionary, label, name, instruction, required)
     elif type == field_attributes.FIELD_SET:
-        return _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required,
+        return _get_field_set_field(code, dictionary, label, name, instruction, required,
                                     dbm)
     elif type == field_attributes.IMAGE:
-        return _get_image_field(code, dictionary, is_entity_question, label, name, instruction, required)
+        return _get_image_field(code, dictionary, label, name, instruction, required)
     return None
 
 def _get_image_field(code, dictionary, is_entity_question, label, name, instruction, required):
@@ -57,7 +57,7 @@ def _get_image_field(code, dictionary, is_entity_question, label, name, instruct
     return field
 
 
-def _get_field_set_field(code, dictionary, is_entity_question, label, name, instruction, required, dbm):
+def _get_field_set_field(code, dictionary, label, name, instruction, required, dbm):
     constraints, constraints_json = [], dictionary.get("constraints")
     if constraints_json is not None:
         constraints = constraints_factory(constraints_json)
