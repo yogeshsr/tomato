@@ -112,7 +112,7 @@ class FormModelTest(MangroveTestCase):
         option_constraint = select_question.options
 
         self.assertEquals(len(option_constraint), 2)
-        self.assertEquals(option_constraint[0].get("val"), 1)
+        self.assertEquals(option_constraint[0].get("val"), 'a')
 
     def test_should_add_new_field(self):
         form_model = FormModel.get(self.manager, self.form_model_id)

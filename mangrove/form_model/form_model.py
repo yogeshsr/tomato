@@ -1,16 +1,17 @@
 from collections import OrderedDict
-from datetime import *
+import copy
+
 from mangrove.datastore.cache_manager import get_cache_manager
 from mangrove.form_model.validator_factory import validator_factory
 from mangrove.datastore.database import DatabaseManager, DataObject
-from mangrove.datastore.documents import FormModelDocument, attributes, EntityFormModelDocument
+from mangrove.datastore.documents import FormModelDocument, EntityFormModelDocument
 from mangrove.errors.MangroveException import FormModelDoesNotExistsException, QuestionCodeAlreadyExistsException, \
-    EntityQuestionAlreadyExistsException, DataObjectAlreadyExists, QuestionAlreadyExistsException, NoDocumentError
-from mangrove.form_model.field import TextField, UniqueIdField, ShortCodeField, FieldSet
+    DataObjectAlreadyExists, QuestionAlreadyExistsException, NoDocumentError
+from mangrove.form_model.field import UniqueIdField, ShortCodeField, FieldSet
 from mangrove.form_model.validators import MandatoryValidator
 from mangrove.utils.types import is_sequence, is_string, is_empty, is_not_empty
 from mangrove.form_model import field
-import copy
+
 
 ARPT_SHORT_CODE = "dummy"
 

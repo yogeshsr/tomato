@@ -6,8 +6,7 @@ from mock import Mock
 
 from mangrove.datastore.database import DatabaseManager
 from mangrove.errors.MangroveException import IncorrectDate, GeoCodeFormatException, RegexMismatchException, RequiredFieldNotPresentException
-from mangrove.form_model.field import DateField, GeoCodeField, field_to_json, HierarchyField, TelephoneNumberField, Field, ShortCodeField,
-    FieldSet
+from mangrove.form_model.field import DateField, GeoCodeField, field_to_json, HierarchyField, TelephoneNumberField, Field, ShortCodeField, FieldSet
 from mangrove.errors.MangroveException import AnswerTooBigException, AnswerTooSmallException, \
     AnswerTooLongException, AnswerTooShortException, AnswerWrongType, AnswerHasTooManyValuesException
 from mangrove.form_model.field import TextField, IntegerField, SelectField, ExcelDate, UniqueIdField

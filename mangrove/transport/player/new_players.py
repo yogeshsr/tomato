@@ -1,11 +1,9 @@
 import base64
 import inspect
-from mangrove.form_model.form_model import NAME_FIELD, get_form_model_by_code
+from mangrove.form_model.form_model import NAME_FIELD
 from mangrove.transport.player.parser import WebParser, SMSParserFactory, XFormParser
-from mangrove.transport.repository.survey_responses import get_survey_response_by_id, \
-    get_survey_response_document
+from mangrove.transport.repository.survey_responses import get_survey_response_document
 from mangrove.transport.services.survey_response_service import SurveyResponseService
-from mangrove.utils.types import is_empty
 from mangrove.transport.repository import reporters
 
 
@@ -91,7 +89,8 @@ class XFormPlayerV2(object):
         mediaFiles = request.media
         service = SurveyResponseService(self.dbm, logger, self.feeds_dbm)
         response = service.save_survey(form_code, values, [], request.transport, request.message, reporter_id)
-        for mediaFile in mediaFiles:
+        if mediaFiles:
+            for mediaFile in mediaFiles:
                 self.dbm.put_attachment(get_survey_response_document(self.dbm, response.survey_response_id), base64.decodestring(mediaFiles[mediaFile].split(',')[1]), attachment_name=mediaFile)
         return response
 
@@ -99,5 +98,5 @@ class XFormPlayerV2(object):
         assert request is not None
         form_code, values = self._parse(request.message)
         service = SurveyResponseService(self.dbm, logger, self.feeds_dbm)
-        return service.edit_survey(form_code, values, [], request.transport, request.message, survey_response, additional_feed_dictionary, reporter_id)
-()
+        return service.edit_survey(form_code, values, [], request.transport, request.message, survey_response,
+                                   additional_feed_dictionary, reporter_id)
