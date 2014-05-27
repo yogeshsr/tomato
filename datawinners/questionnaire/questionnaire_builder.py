@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext
-from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, UniqueIdField, ShortCodeField, FieldSet
+from mangrove.form_model.field import IntegerField, TextField, DateField, SelectField, GeoCodeField, TelephoneNumberField, HierarchyField, UniqueIdField, ShortCodeField, FieldSet, ImageField
 from mangrove.form_model.form_model import LOCATION_TYPE_FIELD_NAME, EntityFormModel
 from mangrove.form_model.validation import NumericRangeConstraint, TextLengthConstraint, RegexConstraint
 from mangrove.form_model.validators import UniqueIdExistsValidator

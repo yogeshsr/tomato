@@ -223,7 +223,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
 
     def get_submissions(self):
         submission_list = []
-        questionnaire = FormModel.get(self.manager, self.questionnaire.qid)
+        questionnaire = FormModel.get(self.manager, self.questionnaire.id)
         submissions = survey_responses_by_form_code(self.manager,questionnaire.form_code)
         for submission in submissions:
             submission_list.append({'id': submission.id,
@@ -274,10 +274,9 @@ def get_questionnaires(request):
     project_list = []
     rows = manager.load_all_rows_in_view('all_projects', descending=True)
     for row in rows:
-        project =  Project.load(manager.database, row['id']);
-        questionnaire = FormModel.get(manager, project.qid)
+        questionnaire = FormModel.get(manager, row['id'])
         if questionnaire.xform:
-            project_temp = dict(name=project.name, id=project.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
+            project_temp = dict(name=questionnaire.name, id=questionnaire.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
             project_list.append(project_temp)
     content = json.dumps(project_list)
     if request.GET.get('callback'):

@@ -17,7 +17,7 @@ from datawinners.main.database import get_database_manager
 from datawinners.project.helper import generate_questionnaire_code
 from datawinners.project.models import Project
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
-from mangrove.form_model.field import FieldSet, GeoCodeField, DateField, ImageField
+from mangrove.form_model.field import FieldSet, GeoCodeField, DateField
 from mangrove.form_model.form_model import FormModel
 
 

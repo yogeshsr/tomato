@@ -84,7 +84,6 @@ function handle_submission_log_edit(table, selected_ids, all_selected, active_ta
     if (is_advance_questionnaire != 'True') {
         location.href = '/project/' + project_id + '/submissions/edit/' + survey_response_id + '/tab/' + active_tab_index
     } else {
-        //location.href = 'http://localhost:8000/media/javascript/en.html?survey='+survey_response_id+'&xform=' + 'http://localhost:8000/project/' + project_id + '/submissions/edit_xform_old/' + survey_response_id
         location.href = '/project/' + project_id + '/submissions/edit_xform/' + survey_response_id
     }
 }

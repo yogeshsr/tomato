@@ -247,24 +247,6 @@ def construct_request_dict(survey_response, questionnaire_form_model, short_code
     result_dict.update({'dsid': short_code})
     return result_dict
 
-def edit_xform_submission_old(request, project_id, survey_response_id):
-    manager = get_database_manager(request.user)
-    project = Project.load(manager.database, project_id)
-    questionnaire_form_model = FormModel.get(manager, project.qid)
-    xform = questionnaire_form_model.xform
-    survey_response = get_survey_response_by_id(manager, survey_response_id)
-    submissionProcessor = XFormSubmissionProcessor()
-
-    xform_instance_xml = submissionProcessor.get_model_edit_str(questionnaire_form_model.fields,
-                                                                                 survey_response.values)
-    xform_with_submission = submissionProcessor.update_instance_children(xform, xform_instance_xml)
-
-    response = HttpResponse(content_type='application/xml')
-    response['Content-Disposition'] = 'attachment; filename=form.xml'
-    response.write(xform_with_submission)
-    response['Content-Length'] = len(response.content)
-    return response
-
 @valid_web_user
 def edit_xform_submission(request, project_id, survey_response_id):
 

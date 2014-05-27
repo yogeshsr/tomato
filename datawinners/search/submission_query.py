@@ -118,7 +118,7 @@ class SubmissionQueryResponseCreator():
                 return  "<span style=\"display:inline-block;width:70px; height: 70px;border:1px solid #CCC; margin-right:5px;display: table-cell;vertical-align: middle;\"><img style=\"width:70px;\" src='/attachment/%s/%s'/></span>" \
                         "<span style=\"display: table-cell;vertical-align: middle;padding: 5px;\"><a href='/download/attachment/%s/%s'>%s</a></span>" % (res._id, value, res._id, value, value)
         else:
-            return res.get(key)
+            return res.get(ugettext(key))
 
 
 class SubmissionQuery(Query):

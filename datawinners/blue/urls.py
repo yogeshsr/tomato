@@ -11,9 +11,6 @@ urlpatterns = patterns('',
                        # called by php; kept for debugging
                        url(r'^project/xformsurvey/(?P<project_id>\w+?)/$', xform_survey_web_questionnaire,
                            name="xform_web_questionnaire"),
-                       # dw url of standalone enketto; kept for debugging
-                       url(r'^project/(?P<project_id>.+?)/submissions/edit_xform_old/(?P<survey_response_id>[^\\/]+?)/$',
-                           submission_views.edit_xform_submission_old, name="edit_xform_submission_old"),
 
 
                        url(r'^project_upload/$', upload_project, name="upload_project"),
@@ -26,6 +23,7 @@ urlpatterns = patterns('',
                        url(r'^xlsform/download/$', view.project_download),
                        url(r'^blue/web_submission/$', new_web_submission, name="new_web_submission"),
                        url(r'^blue/web_submission/(?P<survey_response_id>.+?)/$', update_web_submission, name="update_web_submission"),
+
                        url(r'^client/questionnaires/$', get_questionnaires),
                        url(r'^client/submissions/upload/$', upload_submission),
                        url(r'^client/submissions/(?P<survey_id>\w+?)/$', get_submissions),
