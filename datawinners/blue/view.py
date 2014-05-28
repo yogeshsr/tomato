@@ -1,5 +1,3 @@
-import base64
-from io import StringIO
 import json
 import logging
 import mimetypes
@@ -12,14 +10,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_view_exempt, csrf_response_exempt, csrf_exempt
 from django.views.generic.base import View
-from django_digest.decorators import httpdigest
 import xlwt
 from datawinners import settings
 
@@ -38,7 +33,7 @@ from datawinners.project.wizard_view import update_associated_submissions, \
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from datawinners.utils import workbook_add_sheet
 from mangrove.form_model.form_model import FormModel, get_form_model_by_code
-from mangrove.transport.repository.survey_responses import get_survey_response_by_id, survey_responses_by_form_code
+from mangrove.transport.repository.survey_responses import get_survey_response_by_id, get_survey_responses
 from mangrove.utils.dates import py_datetime_to_js_datestring
 
 logger = logging.getLogger("datawinners.blue")
@@ -196,6 +191,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
     def _model_str_of(self, survey_response_id, project_name):
+        # TODO this can be avoided
         survey_response = get_survey_response_by_id(self.manager, survey_response_id)
         xform_instance_xml = self.submissionProcessor.\
             get_model_edit_str(self.questionnaire.fields, survey_response.values, project_name, self.questionnaire.form_code,)
@@ -221,16 +217,33 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         form_context.update({'is_quota_reached': is_quota_reached(self.request)})
         return render_to_response(self.template, form_context, context_instance=RequestContext(self.request))
 
+    def _to_html(self, data):
+        html = '<ul>'
+        for key, value in data.items():
+            if isinstance(value, dict):
+                continue
+            html += '<li>' + key + ' : '
+            if isinstance(value, list):
+                for v in value:
+                    html += self._to_html(v)
+            else:
+                html += value if value else ""
+            html += '</li>'
+
+        html += '</ul>'
+        return html
+
     def get_submissions(self):
         submission_list = []
         questionnaire = FormModel.get(self.manager, self.questionnaire.id)
-        submissions = survey_responses_by_form_code(self.manager,questionnaire.form_code)
+        submissions = get_survey_responses(self.manager,questionnaire.form_code, None, None, view_name="undeleted_survey_response")
         for submission in submissions:
             submission_list.append({'id': submission.id,
                                     'form_code': self.questionnaire.id,
                                     'type': "surveyResponse",
                                     'created': py_datetime_to_js_datestring(submission.created),
-                                    'xml': self._model_str_of(submission.id, self.questionnaire.name)
+                                    'xml': self._model_str_of(submission.id, self.questionnaire.name),
+                                    'html': self._to_html(submission.values)
                                   })
         return submission_list
 
