@@ -52,7 +52,7 @@ class XFormWebSubmissionHandler():
             return HttpResponseBadRequest()
 
         self.organization.increment_message_count_for(incoming_sp_count=1)
-        content = json.dumps({'id':response.survey_response_id,'created':py_datetime_to_js_datestring(response.created)})
+        content = json.dumps({'submission_uuid':response.survey_response_id,'created':py_datetime_to_js_datestring(response.created)})
         success_response = HttpResponse(content, status=201)
         success_response['submission_id'] = response.survey_response_id
         check_quotas_and_update_users(self.organization)

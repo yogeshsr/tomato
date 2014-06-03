@@ -238,9 +238,8 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         questionnaire = FormModel.get(self.manager, self.questionnaire.id)
         submissions = get_survey_responses(self.manager,questionnaire.form_code, None, None, view_name="undeleted_survey_response")
         for submission in submissions:
-            submission_list.append({'id': submission.id,
-                                    'form_code': self.questionnaire.id,
-                                    'type': "surveyResponse",
+            submission_list.append({'submission_uuid': submission.id,
+                                    'project_uuid': self.questionnaire.id,
                                     'created': py_datetime_to_js_datestring(submission.created),
                                     'xml': self._model_str_of(submission.id, self.questionnaire.name),
                                     'html': self._to_html(submission.values)
@@ -289,7 +288,7 @@ def get_questionnaires(request):
     for row in rows:
         questionnaire = FormModel.get(manager, row['id'])
         if questionnaire.xform:
-            project_temp = dict(name=questionnaire.name, id=questionnaire.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
+            project_temp = dict(name=questionnaire.name, project_uuid=questionnaire.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
             project_list.append(project_temp)
     content = json.dumps(project_list)
     if request.GET.get('callback'):
