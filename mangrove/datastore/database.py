@@ -253,7 +253,10 @@ class DatabaseManager(object):
 
     def get_attachments(self, id, attachment_name=None):
         if attachment_name is not None:
-            return self.database.get_attachment(id, attachment_name, 'Not Found').read()
+            file = self.database.get_attachment(id, attachment_name, 'Not Found')
+            if isinstance(file, basestring):
+                raise LookupError("Attachment not found")
+            return file.read()
 
     def invalidate(self, uid):
         doc = self._load_document(uid)
