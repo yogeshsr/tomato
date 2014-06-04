@@ -226,6 +226,7 @@ class MangroveService():
             error_message["name"] = _("Questionnaire with same name already exists.")
         if not code_has_errors and not name_has_errors:
             questionnaire.update_doc_and_save()
+            questionnaire.add_attachments(self.xls_form, 'questionnaire.xls')
             # UserActivityLog().log(request, action=CREATED_PROJECT, project=questionnaire.name,
             #                       detail=questionnaire.name)
             return questionnaire.id, self.name
