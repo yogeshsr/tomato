@@ -44,11 +44,13 @@
 
 {% block content %}
     <div>
+        {% if show_xls_download_link %}
         <div class="heading_block alpha data_ana border_none">
             <span class="links float_right">
                 <a href="javascript:void(0);" class="download_link">{% trans "Download Project" %}</a>
             </span>
         </div>
+        {% endif %}
         <form id="download_form" method="POST">
         {% csrf_token %}
         <input id="questionnaire_code" name='questionnaire_code' type="hidden" value="{{ questionnaire_code }}"/>

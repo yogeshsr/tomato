@@ -427,6 +427,12 @@ def questionnaire(request, project_id):
         if "success" in [m.message for m in messages.get_messages(request)]:
             is_success = True
         if questionnaire.xform:
+                try: # find a better way to check attachement exisits
+                    questionnaire.get_attachments('questionnaire.xls')
+                    show_xls_download_link = True
+                except LookupError:
+                    show_xls_download_link = False
+
                 return render_to_response('project/edit_xform.html',
                                   {"existing_questions": repr(existing_questions),
                                    'questionnaire_code': questionnaire.form_code,
@@ -436,6 +442,7 @@ def questionnaire(request, project_id):
                                    'project_links': project_links,
                                    'is_quota_reached': is_quota_reached(request),
                                    'in_trial_mode': in_trial_mode,
+                                   'show_xls_download_link': show_xls_download_link,
                                    'post_url': reverse(edit_project, args=[project_id]),
                                    # 'xls_form': repr(json.dumps(XlsProjectParser().parse(questionnaire.get_attachments(attachment_name='questionnaire.xls')))),
                                    'preview_links': get_preview_and_instruction_links()},
