@@ -6,7 +6,8 @@ from fabric.state import env
 
 '''
 To update the dcsweb.twhosted with new code and restart server, run
-fab qa deploy
+fab qa deploy #or
+fab ci deploy
 from $HOME/workspace/datawinners/datawinners/blue
 
 '''
@@ -15,6 +16,12 @@ from $HOME/workspace/datawinners/datawinners/blue
 MANGROVER = 'mangrover'
 DCS = '/home/mangrover/workspace/datawinners'
 MANGROVE_CODE = '/home/mangrover/virtual_env/datawinners/src/mangrove'
+
+#DW_BRANCH = 'develop-dcs-dw'
+#MANGROVE_BRANCH = 'develop-dcs'
+
+DW_BRANCH = 'merged-dw'
+MANGROVE_BRANCH = 'merged-mangrove'
 
 def deploy():
     if confirm('Continue to update the application code?'):
@@ -25,13 +32,16 @@ def deploy():
 def qa():
     env.hosts = ['172.18.29.2']
 
+def ci():
+    env.hosts = ['172.18.29.3']
+
 def deploy_mangrove():
     with cd(MANGROVE_CODE):
-        sudo('git pull --rebase team develop-dcs', user=MANGROVER)
+        sudo('git pull --rebase team ' + MANGROVE_BRANCH, user=MANGROVER)
 
 def deploy_dcs():
     with cd(DCS):
-        sudo('git pull --rebase team develop-dcs-dw', user=MANGROVER)
+        sudo('git pull --rebase team ' + DW_BRANCH, user=MANGROVER)
 
 def restart_uwsgi():
     sudo("service uwsgi restart")

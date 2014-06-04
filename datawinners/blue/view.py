@@ -91,31 +91,34 @@ class ProjectUpdate(View):
         manager = get_database_manager(request.user)
         questionnaire = Project.get(manager, project_id)
         try:
-            file_name = request.GET.get('qqfile').split('.')[0]
+            # file_name = request.GET.get('qqfile').split('.')[0]
             file_content = request.raw_post_data
             tmp_file = NamedTemporaryFile(delete=True, suffix=".xls")
             tmp_file.write(file_content)
             tmp_file.seek(0)
-            is_project_name_changed = file_name != questionnaire.name
+            #is_project_name_changed = file_name != questionnaire.name
+
             xform_as_string, json_xform_data = XlsFormParser(tmp_file, project_name=questionnaire.name).parse()
             mangroveService = MangroveService(request.user, xform_as_string, json_xform_data, questionnaire_code=questionnaire.form_code, project_name=questionnaire.name)
 
-            old_fields = questionnaire.fields
             old_form_code = questionnaire.form_code
             old_field_codes = questionnaire.field_codes()
 
             QuestionnaireBuilder(questionnaire, manager).update_questionnaire_with_questions(json_xform_data)
             questionnaire.xform = mangroveService.xform_with_form_code
 
-            # questionnaire.qid = questionnaire.save()
-            questionnaire.update_attachments(file_content,attachment_name='questionnaire.xls')
+            questionnaire.save()
+            tmp_file.seek(0)
+            questionnaire.add_attachments(tmp_file, 'questionnaire.xls')
+
             deleted_question_codes = _get_deleted_question_codes(old_codes=old_field_codes,
                                                                  new_codes=questionnaire.field_codes())
-            update_associated_submissions(manager.database_name, old_form_code,
+            #FIXME make it async
+            update_associated_submissions.delay(manager.database_name, old_form_code,
                                                 questionnaire.form_code,
                                                 deleted_question_codes)
 
-            questionnaire.save()
+
         except Exception as e:
             return HttpResponse(content_type='application/json', content=json.dumps({'error_msg':e.message}))
 
