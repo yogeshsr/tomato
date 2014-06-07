@@ -260,19 +260,6 @@ def new_web_submission(request):
         logger.exception("Exception in submission : \n%s" % e)
         return HttpResponseBadRequest()
 
-
-@csrf_exempt
-@logged_in_or_basicauth()
-def upload_submission(request):
-    try:
-        response = XFormWebSubmissionHandler(request.user, request=request).\
-            create_new_submission_response()
-        response['Location'] = request.build_absolute_uri(request.path)
-        return enable_cors(response)
-    except Exception as e:
-        logger.exception("Exception in submission : \n%s" % e)
-        return HttpResponseBadRequest()
-
 @csrf_exempt
 def update_web_submission(request, survey_response_id):
     try:
@@ -302,8 +289,20 @@ def get_questionnaires(request):
 
 @csrf_exempt
 @logged_in_or_basicauth()
-def get_submissions(request, survey_id):
-    survey_request = SurveyWebXformQuestionnaireRequest(request, survey_id, XFormSubmissionProcessor())
+def submit_submission(request):
+    try:
+        response = XFormWebSubmissionHandler(request.user, request=request).\
+            create_new_submission_response()
+        response['Location'] = request.build_absolute_uri(request.path)
+        return enable_cors(response)
+    except Exception as e:
+        logger.exception("Exception in submission : \n%s" % e)
+        return HttpResponseBadRequest()
+
+@csrf_exempt
+@logged_in_or_basicauth()
+def get_submissions(request, submission_uuid):
+    survey_request = SurveyWebXformQuestionnaireRequest(request, submission_uuid, XFormSubmissionProcessor())
     content = json.dumps(survey_request.get_submissions())
     if request.GET.get('callback'):
        content= request.GET['callback'] + '('+ content + ')'
