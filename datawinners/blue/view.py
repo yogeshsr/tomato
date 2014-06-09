@@ -114,7 +114,7 @@ class ProjectUpdate(View):
             deleted_question_codes = _get_deleted_question_codes(old_codes=old_field_codes,
                                                                  new_codes=questionnaire.field_codes())
             #FIXME make it async
-            update_associated_submissions.delay(manager.database_name, old_form_code,
+            update_associated_submissions(manager.database_name, old_form_code,
                                                 questionnaire.form_code,
                                                 deleted_question_codes)
 
@@ -149,24 +149,6 @@ def xform_survey_web_questionnaire(request, project_id=None):
     survey_request = SurveyWebXformQuestionnaireRequest(request, project_id,  XFormSubmissionProcessor())
     if request.method == 'GET':
         return survey_request.response_for_get_request()
-
-#@login_required(login_url='/login')
-#@session_not_expired
-#@is_datasender_allowed
-#@project_has_web_device
-#@is_not_expired
-#@is_project_exist
-def xform_questionnaire(request, project_id=None):
-
-    manager = get_database_manager(request.user)
-    project = Project.load(manager.database, project_id)
-    form_model = FormModel.get(manager, project.qid)
-    response = HttpResponse(content_type='application/xml')
-    response['Content-Disposition'] = 'attachment; filename=form.xml'
-    response.write(form_model.xform)
-    response['Content-Length'] = len(response.content)
-    assert len(form_model.xform) == len(response.content)
-    return response
 
 
 class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
@@ -308,18 +290,6 @@ def get_submissions(request, submission_uuid):
        content= request.GET['callback'] + '('+ content + ')'
     response = HttpResponse(content, status=200, content_type='application/json')
     return enable_cors(response)
-
-def get_attachment(request, document_id, attachment_name):
-     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
-     return HttpResponse(manager.get_attachments(document_id, attachment_name=attachment_name))
-
-def attachment_download(request, document_id, attachment_name):
-     manager = get_database_manager(User.objects.get(username='tester150411@gmail.com'))
-     raw_file = manager.get_attachments(document_id, attachment_name=attachment_name)
-     mime_type = mimetypes.guess_type(os.path.basename(attachment_name))[0]
-     response = HttpResponse(raw_file, mimetype=mime_type)
-     response['Content-Disposition'] = 'attachment; filename="%s"' % attachment_name
-     return response
 
 @login_required
 @session_not_expired
