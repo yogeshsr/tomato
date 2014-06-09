@@ -248,7 +248,7 @@ def construct_request_dict(survey_response, questionnaire_form_model, short_code
     return result_dict
 
 @valid_web_user
-def edit_xform_submission(request, project_id, survey_response_id):
+def edit_xform_submission_get(request, project_id, survey_response_id):
 
     survey_request = SurveyWebXformQuestionnaireRequest(request, project_id, XFormSubmissionProcessor())
     if request.method == 'GET':

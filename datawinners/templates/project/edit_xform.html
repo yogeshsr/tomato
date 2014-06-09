@@ -25,20 +25,14 @@
 
 {% block page_js %}
     {{ block.super }}
+
+        <script type="text/javascript">
+            var project_id = "{{ project_id }}"
+        </script>
         <script type="text/javascript" src="/media/javascript/file_uploader/fileuploader.js"></script>
         <script type="text/javascript" src="/media/javascript/project/update_project.js"></script>
         <script type="text/javascript" src="/media/javascript/project/project_download.js"></script>
 
-        <script type="text/javascript">
-
-{#            var existing_questionnaire_code = "{{ questionnaire_code }}";#}
-{#            var project_language = "{{ project.language }}";#}
-            var project_name = "{{ project.name }}";
-{#            var project_has_submissions = "{{ project_has_submissions }}";#}
-            var post_url = "{{ post_url }}"
-            var project_id = "{{ project_id }}"
-
-    </script>
 
 {% endblock %}
 

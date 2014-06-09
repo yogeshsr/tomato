@@ -84,6 +84,7 @@ class ProjectUpdate(View):
     @method_decorator(login_required)
     @method_decorator(session_not_expired)
     @method_decorator(is_not_expired)
+    @method_decorator(is_datasender)
     def dispatch(self, *args, **kwargs):
         return super(ProjectUpdate, self).dispatch(*args, **kwargs)
 
@@ -145,7 +146,7 @@ def upload_project(request):
 @is_datasender_allowed
 @project_has_web_device
 @is_not_expired
-def xform_survey_web_questionnaire(request, project_id=None):
+def new_xform_submission_get(request, project_id=None):
     survey_request = SurveyWebXformQuestionnaireRequest(request, project_id,  XFormSubmissionProcessor())
     if request.method == 'GET':
         return survey_request.response_for_get_request()
@@ -232,7 +233,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         return submission_list
 
 @csrf_exempt
-def new_web_submission(request):
+def new_xform_submission_post(request):
     try:
         response = XFormWebSubmissionHandler(request.user, request=request).\
             create_new_submission_response()
@@ -243,7 +244,7 @@ def new_web_submission(request):
         return HttpResponseBadRequest()
 
 @csrf_exempt
-def update_web_submission(request, survey_response_id):
+def edit_xform_submission_post(request, survey_response_id):
     try:
         return XFormWebSubmissionHandler(request.user, request=request).\
             update_submission_response(survey_response_id)
