@@ -41,6 +41,9 @@ class XFormWebSubmissionHandler():
 
     def update_submission_response(self, survey_response_id):
         survey_response = get_survey_response_by_id(self.manager, survey_response_id)
+        if not survey_response:
+            raise LookupError()
+
         player_response = self.player.update_survey_response(self.mangrove_request, self.user_profile.reporter_id,
                                                       logger=sp_submission_logger, survey_response=survey_response)
         return self._post_save(player_response)
@@ -52,7 +55,9 @@ class XFormWebSubmissionHandler():
             return HttpResponseBadRequest()
 
         self.organization.increment_message_count_for(incoming_sp_count=1)
-        content = json.dumps({'submission_uuid':response.survey_response_id,'created':py_datetime_to_js_datestring(response.created)})
+        content = json.dumps({'submission_uuid':response.survey_response_id,
+                              'version':'sv1',
+                              'created':py_datetime_to_js_datestring(response.created)})
         success_response = HttpResponse(content, status=201)
         success_response['submission_id'] = response.survey_response_id
         check_quotas_and_update_users(self.organization)

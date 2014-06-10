@@ -1,4 +1,5 @@
 import base64
+import json
 
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -125,3 +126,8 @@ def enable_cors(response):
     response['Access-Control-Allow-Methods'] = 'HEAD, GET, OPTIONS, POST, DELETE'
     response['Access-Control-Allow-Headers'] = 'origin, content-type, accept, x-requested-with, authorization, X-Custom-Header'
     return response
+
+
+def response_json_cors(content):
+    response = HttpResponse(json.dumps(content), status=200, content_type='application/json')
+    return enable_cors(response)

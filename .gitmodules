@@ -1,0 +1,3 @@
+[submodule "datawinners/dcs_app"]
+	path = datawinners/dcs_app
+	url = https://github.com/ICT4H/dcs-api.git

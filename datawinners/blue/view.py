@@ -1,7 +1,5 @@
 import json
 import logging
-import mimetypes
-import os
 import re
 from tempfile import NamedTemporaryFile
 
@@ -9,7 +7,6 @@ from django.contrib.auth.decorators import login_required
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.decorators import method_decorator
@@ -19,7 +16,6 @@ import xlwt
 from datawinners import settings
 
 from datawinners.accountmanagement.decorators import session_not_expired, is_not_expired, is_datasender_allowed, project_has_web_device, is_datasender
-from datawinners.blue.auth import logged_in_or_basicauth, enable_cors
 from datawinners.blue.xform_bridge import MangroveService, XlsFormParser, XFormTransformer, XFormSubmissionProcessor, XlsProjectParser
 from datawinners.blue.xform_web_submission_handler import XFormWebSubmissionHandler
 from datawinners.main.database import get_database_manager
@@ -32,11 +28,11 @@ from datawinners.project.wizard_view import update_associated_submissions, \
     _get_deleted_question_codes
 from datawinners.questionnaire.questionnaire_builder import QuestionnaireBuilder
 from datawinners.utils import workbook_add_sheet
-from mangrove.form_model.form_model import FormModel, get_form_model_by_code
+from mangrove.form_model.form_model import get_form_model_by_code
 from mangrove.transport.repository.survey_responses import get_survey_response_by_id, get_survey_responses
 from mangrove.utils.dates import py_datetime_to_js_datestring
 
-logger = logging.getLogger("datawinners.blue")
+logger = logging.getLogger("datawinners.xlsform")
 
 class ProjectUpload(View):
 
@@ -221,16 +217,26 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
 
     def get_submissions(self):
         submission_list = []
-        questionnaire = FormModel.get(self.manager, self.questionnaire.id)
-        submissions = get_survey_responses(self.manager,questionnaire.form_code, None, None, view_name="undeleted_survey_response")
+        submissions = get_survey_responses(self.manager, self.questionnaire.form_code, None, None, view_name="undeleted_survey_response")
         for submission in submissions:
             submission_list.append({'submission_uuid': submission.id,
+                                    'version': 'sv1',
                                     'project_uuid': self.questionnaire.id,
-                                    'created': py_datetime_to_js_datestring(submission.created),
-                                    'xml': self._model_str_of(submission.id, self.questionnaire.name),
-                                    'html': self._to_html(submission.values)
+                                    'created': py_datetime_to_js_datestring(submission.created)
                                   })
         return submission_list
+
+    def get_submission(self, submission_uuid):
+        submission = get_survey_response_by_id(self.manager, submission_uuid)
+
+        return {'submission_uuid': submission.id,
+                'version': 'sv1',
+                'project_uuid': self.questionnaire.id,
+                'created': py_datetime_to_js_datestring(submission.created),
+                'xml': self._model_str_of(submission.id, self.questionnaire.name),
+                'html': self._to_html(submission.values)
+            }
+
 
 @csrf_exempt
 def new_xform_submission_post(request):
@@ -251,46 +257,6 @@ def edit_xform_submission_post(request, survey_response_id):
     except Exception as e:
         logger.exception("Exception in submission : \n%s" % e)
         return HttpResponseBadRequest()
-
-@csrf_exempt
-@logged_in_or_basicauth()
-def get_questionnaires(request):
-    manager =  get_database_manager(request.user)
-    project_list = []
-    rows = manager.load_all_rows_in_view('all_projects', descending=True)
-    for row in rows:
-        questionnaire = FormModel.get(manager, row['id'])
-        if questionnaire.xform:
-            project_temp = dict(name=questionnaire.name, project_uuid=questionnaire.id, xform=re.sub(r"\n", " ", XFormTransformer(questionnaire.xform).transform()))
-            project_list.append(project_temp)
-    content = json.dumps(project_list)
-    if request.GET.get('callback'):
-        content= request.GET['callback'] + '('+ content + ')'
-    response = HttpResponse(content, status=200, content_type='application/json')
-
-    return enable_cors(response)
-
-@csrf_exempt
-@logged_in_or_basicauth()
-def submit_submission(request):
-    try:
-        response = XFormWebSubmissionHandler(request.user, request=request).\
-            create_new_submission_response()
-        response['Location'] = request.build_absolute_uri(request.path)
-        return enable_cors(response)
-    except Exception as e:
-        logger.exception("Exception in submission : \n%s" % e)
-        return HttpResponseBadRequest()
-
-@csrf_exempt
-@logged_in_or_basicauth()
-def get_submissions(request, submission_uuid):
-    survey_request = SurveyWebXformQuestionnaireRequest(request, submission_uuid, XFormSubmissionProcessor())
-    content = json.dumps(survey_request.get_submissions())
-    if request.GET.get('callback'):
-       content= request.GET['callback'] + '('+ content + ')'
-    response = HttpResponse(content, status=200, content_type='application/json')
-    return enable_cors(response)
 
 @login_required
 @session_not_expired

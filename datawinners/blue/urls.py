@@ -1,7 +1,6 @@
 from django.conf.urls.defaults import patterns, url
 from datawinners.blue import view
-from datawinners.blue.view import new_xform_submission_post, edit_xform_submission_post, \
-    get_questionnaires, submit_submission, get_submissions
+from datawinners.blue.view import new_xform_submission_post, edit_xform_submission_post
 from datawinners.blue.view import ProjectUpload, ProjectUpdate
 from datawinners.blue.view import new_xform_submission_get
 from datawinners.project.views.submission_views import edit_xform_submission_get
@@ -16,7 +15,4 @@ urlpatterns = patterns('',
     url(r'^xlsform/web_submission/(?P<survey_response_id>.+?)/$', edit_xform_submission_post, name="update_web_submission"),
     url(r'^xlsform/web_submission/$', new_xform_submission_post, name="new_web_submission"),
 
-    url(r'^client/questionnaires/$', get_questionnaires),
-    url(r'^client/submissions/(?P<submission_uuid>\w+?)/$', get_submissions),
-    url(r'^client/submissions/', submit_submission),
 )
