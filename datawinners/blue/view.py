@@ -110,7 +110,7 @@ class ProjectUpdate(View):
 
             deleted_question_codes = _get_deleted_question_codes(old_codes=old_field_codes,
                                                                  new_codes=questionnaire.field_codes())
-            #FIXME make it async
+            #FIXME make it async; add to task.py
             update_associated_submissions(manager.database_name, old_form_code,
                                                 questionnaire.form_code,
                                                 deleted_question_codes)
@@ -220,7 +220,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         submissions = get_survey_responses(self.manager, self.questionnaire.form_code, None, None, view_name="undeleted_survey_response")
         for submission in submissions:
             submission_list.append({'submission_uuid': submission.id,
-                                    'version': 'sv1',
+                                    'version': submission._doc.rev,
                                     'project_uuid': self.questionnaire.id,
                                     'created': py_datetime_to_js_datestring(submission.created)
                                   })
@@ -230,7 +230,7 @@ class SurveyWebXformQuestionnaireRequest(SurveyWebQuestionnaireRequest):
         submission = get_survey_response_by_id(self.manager, submission_uuid)
 
         return {'submission_uuid': submission.id,
-                'version': 'sv1',
+                'version': submission._doc.rev,
                 'project_uuid': self.questionnaire.id,
                 'created': py_datetime_to_js_datestring(submission.created),
                 'xml': self._model_str_of(submission.id, self.questionnaire.name),
