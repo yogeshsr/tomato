@@ -1,6 +1,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import re
 from datetime import datetime
+from django.core.urlresolvers import resolve, Resolver404
+from django.http import Http404
 
 from django.template.defaultfilters import slugify
 import random
@@ -27,6 +29,17 @@ EXCEL_DATE_STYLE = {'mm.yyyy': xlwt.easyxf(num_format_str='MMM, YYYY'),
                     'yyyy': xlwt.easyxf(num_format_str='YYYY'),
                     'submission_date': xlwt.easyxf(num_format_str='MMM DD, YYYY hh:mm:ss')}
 
+
+def fall_back_resolver(request):
+    if hasattr(settings, "BRAND_URL_CONF") and len(settings.BRAND_URL_CONF):
+        for urlconf in settings.BRAND_URL_CONF:
+            try:
+                view, args, kwargs = resolve(request.path_info, urlconf)
+                kwargs['request'] = request
+                return view(*args, **kwargs)
+            except Resolver404:
+                pass
+    raise Http404
 
 def get_excel_sheet(raw_data, sheet_name):
     wb = xlwt.Workbook()
