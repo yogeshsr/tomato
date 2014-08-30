@@ -266,6 +266,8 @@ ELASTIC_SEARCH_TIMEOUT = 180
 QUESTIONNAIRE_TEMPLATE_DB_NAME = "questionnaire_library"
 QUESTIONNAIRE_TEMPLATE_JSON_DATA_FILE = PROJECT_DIR + '/questionnaire/template_data.json'
 
+BRAND = "dw"
+
 try:
     from local_settings import *
 except ImportError, e:
