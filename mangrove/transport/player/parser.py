@@ -366,9 +366,6 @@ class XFormParser(object):
         if type(field) == FieldSet:
             value_list = self._format_field_set(field, values[code])
             values[code] =  [self._fetch_string_value(r) for r in value_list]
-        if type(field) == ImageField:
-            attachment = self._get_attachment(values[code])
-            values[code] = attachment
 
     def __format_response_fields(self, form_model, values):
         [self._format_field(field, values) for field in form_model.fields]

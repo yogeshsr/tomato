@@ -91,8 +91,10 @@ class XFormPlayerV2(object):
         service = SurveyResponseService(self.dbm, logger, self.feeds_dbm)
         response = service.save_survey(form_code, values, [], request.transport, request.message, reporter_id)
         if mediaFiles:
-            for mediaFile in mediaFiles:
-                self.dbm.put_attachment(get_survey_response_document(self.dbm, response.survey_response_id), base64.decodestring(mediaFiles[mediaFile].split(',')[1]), attachment_name=mediaFile)
+            for name, file in mediaFiles.iteritems():
+                if name != 'xml_submission_file':
+                    self.dbm.put_attachment(get_survey_response_document(self.dbm, response.survey_response_id),
+                                            file, attachment_name=name)
         return response
 
     def update_survey_response(self, request, logger=None, survey_response=None, additional_feed_dictionary=None):
