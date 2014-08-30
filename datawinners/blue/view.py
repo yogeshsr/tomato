@@ -1,5 +1,7 @@
 import json
 import logging
+import mimetypes
+import os
 import re
 from tempfile import NamedTemporaryFile
 import traceback
@@ -367,3 +369,23 @@ def send_email_on_exception(user,error_type,stack_trace,additional_details=None)
 
 
     email.send()
+
+@login_required
+@session_not_expired
+@is_datasender
+@is_not_expired
+def get_attachment(request, document_id, attachment_name):
+    manager = get_database_manager(request.user)
+    return HttpResponse(manager.get_attachments(document_id, attachment_name=attachment_name))
+
+@login_required
+@session_not_expired
+@is_datasender
+@is_not_expired
+def attachment_download(request, document_id, attachment_name):
+    manager = get_database_manager(request.user)
+    raw_file = manager.get_attachments(document_id, attachment_name=attachment_name)
+    mime_type = mimetypes.guess_type(os.path.basename(attachment_name))[0]
+    response = HttpResponse(raw_file, mimetype=mime_type)
+    response['Content-Disposition'] = 'attachment; filename="%s"' % attachment_name
+    return response

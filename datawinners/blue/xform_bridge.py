@@ -32,6 +32,7 @@ def get_generated_xform_id_name(xform):
 class XlsFormParser():
     type_dict = {'group': ['repeat', 'group'],
                  'field': ['text', 'integer', 'decimal', 'date', 'geopoint', 'calculate', 'cascading_select'],
+                 'media': ['photo'],
                  'auto_filled': ['note', 'start', 'end', 'today', 'deviceid', 'subscriberid', 'imei', 'phonenumber'],
                  'select': ['select one', 'select all that apply']
     }
