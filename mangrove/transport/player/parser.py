@@ -366,6 +366,13 @@ class XFormParser(object):
         if type(field) == FieldSet:
             value_list = self._format_field_set(field, values[code])
             values[code] =  [self._fetch_string_value(r) for r in value_list]
+        if type(field) == ImageField:
+            values[code] = self._get_file_name(values[code])
+
+    def _get_file_name(self, value):
+        web_new_file_seleted = type(value) is OrderedDict
+        return [v for k,v in value.iteritems() if k == '#text'][0] if web_new_file_seleted\
+                else value
 
     def __format_response_fields(self, form_model, values):
         [self._format_field(field, values) for field in form_model.fields]
