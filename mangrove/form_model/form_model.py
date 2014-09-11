@@ -98,6 +98,20 @@ def _header_fields(fields, key_attribute, header_dict):
         if not header_dict.get(key):
             header_dict.update({key: field.label})
 
+def header_fields_for_mobile(form_model, key_attribute="name"):
+    header_dict =  OrderedDict()
+    _header_fields_for_mobile(form_model.fields, key_attribute, header_dict)
+    return header_dict
+
+def _header_fields_for_mobile(fields, key_attribute, header_dict):
+    for field in fields:
+        if isinstance(field, FieldSet) and (field.is_group() or field.is_repeat()):
+            _header_fields_for_mobile(field.fields, key_attribute, header_dict)
+            continue
+        key = field.__getattribute__(key_attribute) if type(key_attribute) == str else key_attribute(field)
+        if not header_dict.get(key):
+            header_dict.update({key: field.label})
+
 def get_field_by_attribute_value(form_model, key_attribute, attribute_label):
     #ex: field1.name='first_name' field1.code='q1'
     #    field2.name='location' field2.code='q3'

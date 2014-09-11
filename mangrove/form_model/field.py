@@ -717,6 +717,9 @@ class FieldSet(Field):
     def is_field_set(self):
         return True
 
+    def is_repeat(self):
+        return self._dict.get(self.FIELDSET_TYPE) == 'repeat'
+
     def is_group(self):
         return self._dict.get(self.FIELDSET_TYPE) == 'group'
 
