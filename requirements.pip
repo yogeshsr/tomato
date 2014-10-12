@@ -13,4 +13,4 @@ babel
 networkx
 gdata
 xlrd
-pylibmc
+python-memcached
